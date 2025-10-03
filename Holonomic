@@ -1,0 +1,169 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+@Autonomous(name="Holonomic")
+public class Holonomic extends LinearOpMode {
+
+    // --- Drive Motors ---
+    DcMotor frontLeft, frontRight, backLeft, backRight;
+
+    // --- Encoder-only (passive) Odometry Wheels ---
+
+    // --- IMU ---
+    IMU imu;
+
+    // --- Global Pose ---
+    double x = 0.0, y = 0.0, theta = 0.0;   // global field position
+    double lastXWheel = 0.0, lastYWheel = 0.0;
+
+    // --- Constants ---
+    final double TICKS_PER_REV = 8192;     // Rev Through Bore Encoder
+    final double WHEEL_DIAMETER_CM = 3.0;  // odometry wheel diameter
+    final double TICKS_TO_CM = (Math.PI * WHEEL_DIAMETER_CM) / TICKS_PER_REV;
+
+    final double Kp_xy = 0.07;      // proportional gain for x/y
+    final double Kp_theta = 0.05;   // proportional gain for heading
+
+    // --- Pose class ---
+    class Pose2d {
+        double x, y, theta;
+        Pose2d(double x, double y, double theta) {
+            this.x = x; this.y = y; this.theta = theta;
+        }
+    }
+
+    @Override
+    public void runOpMode() {
+        // --- Initialize Drive Motors ---
+        frontLeft = hardwareMap.get(DcMotor.class, "FL");
+        frontRight = hardwareMap.get(DcMotor.class, "FR");
+        backLeft = hardwareMap.get(DcMotor.class, "BL");
+        backRight = hardwareMap.get(DcMotor.class, "BR");
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+
+
+
+        // Reset encoders
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Use RUN_WITHOUT_ENCODER since these are passive
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // --- Initialize IMU (new API) ---
+        imu = hardwareMap.get(IMU.class, "imu");
+        IMU.Parameters imuParams = new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,        // change if hub mounted differently
+                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD     // change if USB faces left/right/back
+                )
+        );
+        imu.initialize(imuParams);
+        imu.resetYaw();
+
+
+        waitForStart();
+
+        while(true) {
+            moveToTarget(0, 20, Math.toRadians(0));
+            moveToTarget(20, 20, Math.toRadians(0));
+            moveToTarget(20, 0, Math.toRadians(0));
+            moveToTarget(0, 0, Math.toRadians(0));
+        }
+    }
+
+    // --- Odometry + IMU pose tracking ---
+    Pose2d getRobotPose() {
+        // Read encoder positions (ticks → cm)
+        double xWheel = -backLeft.getCurrentPosition() * TICKS_TO_CM;
+        double yWheel = -backRight.getCurrentPosition() * TICKS_TO_CM;
+
+        // Change since last loop
+        double deltaXWheel = xWheel - lastXWheel;
+        double deltaYWheel = yWheel - lastYWheel;
+
+        lastXWheel = xWheel;
+        lastYWheel = yWheel;
+
+        // Get current heading from IMU (new API)
+        theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+        // Rotate local motion into global coordinates
+        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
+        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
+
+        x += deltaX;
+        y += deltaY;
+
+        return new Pose2d(x, y, theta);
+    }
+
+    // --- Move to target pose ---
+    void moveToTarget(double targetX, double targetY, double targetTheta) {
+        double toleranceXY = 1.0;     // cm
+        double toleranceTheta = Math.toRadians(2); // ~2 degrees
+
+        while (opModeIsActive()) {
+            Pose2d pose = getRobotPose();
+
+            double errorX = targetX - pose.x;
+            double errorY = targetY - pose.y;
+            double errorTheta = targetTheta - pose.theta;
+
+            // Stop if within tolerances
+            if (Math.abs(errorX) < toleranceXY &&
+                    Math.abs(errorY) < toleranceXY){
+                    //Math.abs(errorTheta) < toleranceTheta) {
+                break;
+            }
+
+            // Convert global error → robot frame
+            double errorForward =  errorX * Math.cos(pose.theta) + errorY * Math.sin(pose.theta);
+            double errorStrafe  = -errorX * Math.sin(pose.theta) + errorY * Math.cos(pose.theta);
+
+            // Proportional control
+            double driveForward = Kp_xy * errorForward;
+            double driveStrafe  = Kp_xy * errorStrafe;
+            double turnPower    = Kp_theta * errorTheta;
+
+            // Normalize & apply powers
+            setMecanumPowers(driveForward, driveStrafe, turnPower);
+
+            // Telemetry
+            telemetry.addData("Target", "(%.1f, %.1f, %.1f°)", targetX, targetY, Math.toDegrees(targetTheta));
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", pose.x, pose.y, Math.toDegrees(pose.theta));
+            telemetry.update();
+        }
+    }
+
+    // --- Mecanum Drive ---
+    void setMecanumPowers(double strafe, double forward, double rotate) {
+        double fl = forward + strafe + rotate;
+        double fr = forward - strafe - rotate;
+        double bl = forward - strafe + rotate;
+        double br = forward + strafe - rotate;
+//        double fl = forward + strafe;
+//        double fr = forward - strafe;
+//        double bl = forward - strafe;
+//        double br = forward + strafe;
+
+
+
+        // Normalize m[
+        double max = Math.max(1.0, Math.max(Math.abs(fl),
+                Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br)))));
+        fl /= max; fr /= max; bl /= max; br /= max;
+
+        frontLeft.setPower(fl);
+        frontRight.setPower(fr);
+        backLeft.setPower(bl);
+        backRight.setPower(br);
+    }
+}
