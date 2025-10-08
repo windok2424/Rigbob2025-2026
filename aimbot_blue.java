@@ -90,6 +90,7 @@ while(opModeIsActive()) {
 
 
         List<FiducialResult> fiducials = result.getFiducialResults();
+
         for (FiducialResult fiducial : fiducials) {
             int id = fiducial.getFiducialId(); // The ID number of the fiducial
             if (id == 20) {
@@ -120,15 +121,18 @@ telemetry.update();
             //telemetry.addData("Fiducial: ", id);
 
             if (tx > 7 && yes) {
-                turret.setPower(-1);
+                turret.setPower(0.4);
                 sleep(10);
+                tx=0;
                 continue;
             } else if (tx < -7 && yes) {
-                turret.setPower(1);
+                turret.setPower(-0.4);
                 sleep(10);
+                tx=0;
                 continue;
             } else {
                 turret.setPower(0);
+                tx = 0;
                 continue;
             }
         }
