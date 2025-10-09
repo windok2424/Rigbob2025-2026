@@ -66,19 +66,23 @@ public class aimbot_blue extends LinearOpMode {
         boolean pgp = false;
         boolean ppg = false;
 
-        //gamepad 1
-        double y = -gamepad1.left_stick_y;
-        double x = gamepad1.left_stick_x;
-        double rx = -gamepad1.right_stick_x;
-
-        boolean slowMode = gamepad1.left_stick_button;
-
-        double powerFL = (y + x + rx);
-        double powerBL = (y - x + rx);
-        double powerFR = (y - x - rx);
-        double powerBR = (y + x - rx);
-
+        
 while(opModeIsActive()) {
+    //gamepad 1
+    double y = -gamepad1.left_stick_y;
+    double x = gamepad1.left_stick_x;
+    double rx = -gamepad1.right_stick_x;
+
+    boolean slowMode = gamepad1.left_stick_button;
+
+    double powerFL = (y + x + rx);
+    double powerBL = (y - x + rx);
+    double powerFR = (y - x - rx);
+    double powerBR = (y + x - rx);
+
+    
+    telemetry.addData("Restarted", powerBL);
+    telemetry.update();
     FL.setPower(powerFL);
     BL.setPower(powerBL);
     FR.setPower(powerFR);
@@ -102,6 +106,7 @@ while(opModeIsActive()) {
             } else if(id == 23){
                 ppg = true;
             }
+            telemetry.addData("finished", powerBL);
         }
 
         //int id = fiducial.getId(); // The ID number of the fiducial... I hope. nay. I pray.
@@ -123,21 +128,22 @@ telemetry.update();
             if (tx > 7 && yes) {
                 turret.setPower(0.4);
                 sleep(10);
-                tx=0;
                 continue;
             } else if (tx < -7 && yes) {
                 turret.setPower(-0.4);
                 sleep(10);
-                tx=0;
                 continue;
             } else {
                 turret.setPower(0);
-                tx = 0;
                 continue;
             }
-        }
-
+        } else {
+        turret.setPower(0);
         telemetry.addData("Limelight", "No Targets");
+        telemetry.update();
+    }
+
+
 }
 
 
