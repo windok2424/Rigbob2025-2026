@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -22,6 +23,11 @@ public class aimbot_blue extends LinearOpMode {
     DcMotorEx BL;
     DcMotorEx FR;
     DcMotorEx BR;
+
+    DcMotorEx spin1;
+    DcMotorEx spin2;
+
+    Servo elevation;
 
     DcMotorEx turret; //turntable motor
     //DcMotorEx spin; //flywheel
@@ -44,6 +50,10 @@ public class aimbot_blue extends LinearOpMode {
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
         turret = hardwareMap.get(DcMotorEx.class, "turret");
+        //spin1 = hardwareMap.get(DcMotorEx.class, "spinup");
+        //spin2 = hardwareMap.get(DcMotorEx.class, "spindown");
+
+        //elevation = hardwareMap.get(Servo.class, "elevate");
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.start();
@@ -58,7 +68,7 @@ public class aimbot_blue extends LinearOpMode {
 
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        FL.setDirection((DcMotorSimple.Direction.REVERSE));
+        BL.setDirection((DcMotorSimple.Direction.REVERSE));
         //motorBL.setDirection((DcMotorSimple.Direction.REVERSE));
         BR.setDirection((DcMotorSimple.Direction.REVERSE));
 
@@ -66,7 +76,7 @@ public class aimbot_blue extends LinearOpMode {
         boolean pgp = false;
         boolean ppg = false;
 
-        
+
 while(opModeIsActive()) {
     //gamepad 1
     double y = -gamepad1.left_stick_y;
@@ -75,13 +85,32 @@ while(opModeIsActive()) {
 
     boolean slowMode = gamepad1.left_stick_button;
 
-    double powerFL = (y + x + rx);
-    double powerBL = (y - x + rx);
-    double powerFR = (y - x - rx);
-    double powerBR = (y + x - rx);
+    double powerFL = (-y - x + rx);
+    double powerBL = (y - x - rx);
+    double powerFR = (y - x + rx);
+    double powerBR = (-y - x - rx);
 
-    
-    telemetry.addData("Restarted", powerBL);
+//    if (gamepad1.a && toggleReady) {
+//        toggleReady = false; // Set toggle to not ready to prevent re-triggering
+//
+//        // Toggle the servo state
+//        servoState = !servoState;
+//
+//        // Set servo position based on the new state
+//        if (servoState) {
+//            .setPosition(1.0); // Example: 1.0 for open position
+//        } else {
+//            myServo.setPosition(0.0); // Example: 0.0 for closed position
+//        }
+//    }
+
+    // Reset toggleReady when the button is released
+//    if (!gamepad1.a) {
+//        toggleReady = true;
+//    }
+
+
+    //telemetry.addData("Restarted", powerBL);
     telemetry.update();
     FL.setPower(powerFL);
     BL.setPower(powerBL);
@@ -118,6 +147,7 @@ while(opModeIsActive()) {
         telemetry.addData("Pipeline: ", result.getPipelineIndex());
         telemetry.addData("Target X", tx);
         telemetry.addData("Target Y", ty);
+        telemetry.addData("Distance", Distance(ta));
         telemetry.addData("Target Area", ta);
 
 telemetry.update();
@@ -125,12 +155,12 @@ telemetry.update();
 
             //telemetry.addData("Fiducial: ", id);
 
-            if (tx > 7 && yes) {
-                turret.setPower(0.4);
+            if (tx > 3 && yes) {
+                turret.setPower(0.8);
                 sleep(10);
                 continue;
-            } else if (tx < -7 && yes) {
-                turret.setPower(-0.4);
+            } else if (tx < -3 && yes) {
+                turret.setPower(-0.8);
                 sleep(10);
                 continue;
             } else {
@@ -147,6 +177,14 @@ telemetry.update();
 }
 
 
+
+    }
+
+    public double Distance(double ta){
+        //what is this dumbahh thing
+        double scale = 30665.95; //placeholder value, subject to change.
+        double dist = (scale / ((ta*100)*(ta*100)));
+        return dist;
 
     }
 }
