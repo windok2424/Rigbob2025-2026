@@ -42,7 +42,9 @@ public class shooter_test extends LinearOpMode{
         BR = hardwareMap.get(DcMotorEx.class, "BR");
         turret = hardwareMap.get(DcMotorEx.class, "turret");
 
-
+        FL.setDirection((DcMotorSimple.Direction.REVERSE));
+        //motorBL.setDirection((DcMotorSimple.Direction.REVERSE));
+        FR.setDirection((DcMotorSimple.Direction.REVERSE));
 
         while(opModeIsActive()){
 
@@ -57,14 +59,14 @@ public class shooter_test extends LinearOpMode{
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
-            double spin = gamepad2.right_stick_x;
+            double spin = gamepad2.left_stick_x;
 
             FL.setPower(powerFL);
             BL.setPower(powerBL);
             FR.setPower(powerFR);
             BR.setPower(powerBR);
 
-            turret.setPower(spin);
+            turret.setPower(-spin/3);
 
 
             shootup.setPower(-1);
