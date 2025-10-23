@@ -27,6 +27,8 @@ public class shooter_test extends LinearOpMode{
     DcMotorEx FR;
     DcMotorEx BR;
 
+    DcMotorEx turret;
+
     public void runOpMode() throws InterruptedException{
         waitForStart();
 
@@ -38,6 +40,9 @@ public class shooter_test extends LinearOpMode{
         BL = hardwareMap.get(DcMotorEx.class, "BL");
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
+        turret = hardwareMap.get(DcMotorEx.class, "turret");
+
+
 
         while(opModeIsActive()){
 
@@ -52,10 +57,14 @@ public class shooter_test extends LinearOpMode{
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
+            double spin = gamepad2.right_stick_x;
+
             FL.setPower(powerFL);
             BL.setPower(powerBL);
             FR.setPower(powerFR);
             BR.setPower(powerBR);
+
+            turret.setPower(spin);
 
 
             shootup.setPower(-1);
