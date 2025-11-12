@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -19,14 +20,16 @@ import java.util.List;
 
 @TeleOp(name = "aimbot_blue")
 public class aimbot_blue extends LinearOpMode {
+
+    //--Drive Motors--
     DcMotorEx FL;
     DcMotorEx BL;
     DcMotorEx FR;
     DcMotorEx BR;
-
+    //--uhh spin thingies--
     DcMotorEx spin1;
     DcMotorEx spin2;
-
+    //--Turret Stuff--
     Servo elevation;
 
     DcMotorEx turret; //turntable motor
@@ -34,6 +37,16 @@ public class aimbot_blue extends LinearOpMode {
 
     //Servo upDown; //up and down servo
     Limelight3A limelight;
+
+    //--Intake--
+    DcMotorEx intake;
+    CRServo roll_left;
+    CRServo roll_right;
+
+    CRServo up_left;
+    CRServo up_right;
+
+    Servo kickup;
 
     //@Override
     //Limelight3A limelight;
@@ -50,8 +63,13 @@ public class aimbot_blue extends LinearOpMode {
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
         turret = hardwareMap.get(DcMotorEx.class, "turret");
-        //spin1 = hardwareMap.get(DcMotorEx.class, "spinup");
-        //spin2 = hardwareMap.get(DcMotorEx.class, "spindown");
+        spin1 = hardwareMap.get(DcMotorEx.class, "spinup");
+        spin2 = hardwareMap.get(DcMotorEx.class, "spindown");
+        
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        
+        roll_left = hardwareMap.get(CRServo.class, "inspin1");
+        roll_right = hardwareMap.get(CRServo.class, "inspin1");
 
         //elevation = hardwareMap.get(Servo.class, "elevate");
 
@@ -84,6 +102,8 @@ while(opModeIsActive()) {
     double rx = -gamepad1.right_stick_x;
 
     boolean slowMode = gamepad1.left_stick_button;
+    boolean manual_aim = gamepad2.left_bumper;
+    double manual_power = gamepad2.right_stick_x;
 
     double powerFL = (-y - x + rx);
     double powerBL = (y - x - rx);
@@ -119,7 +139,7 @@ while(opModeIsActive()) {
     //turret.setPower(1); bad idea to uncomment this. Run it only for 2 seconds
     LLResult result = limelight.getLatestResult();
     boolean yes = false;
-    if (result != null && result.isValid()) {
+    if (result != null && result.isValid() && !manual_aim) {
 
 
         List<FiducialResult> fiducials = result.getFiducialResults();
@@ -167,9 +187,13 @@ telemetry.update();
                 turret.setPower(0);
                 continue;
             }
-        } else {
+        } else if(manual_aim) {
+        turret.setPower(-manual_power);
+        telemetry.addData("Limelight", "Manual Aim");
+        telemetry.update();
+    } else{
         turret.setPower(0);
-        telemetry.addData("Limelight", "No Targets");
+        telemetry.addData("Limelight", "No Targets Found");
         telemetry.update();
     }
 
