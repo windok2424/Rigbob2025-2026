@@ -63,8 +63,18 @@ public class aimbot_blue extends LinearOpMode {
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
         turret = hardwareMap.get(DcMotorEx.class, "turret");
-        spin1 = hardwareMap.get(DcMotorEx.class, "spinup");
-        spin2 = hardwareMap.get(DcMotorEx.class, "spindown");
+        spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
+        spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
+
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+
+        roll_left = hardwareMap.get(CRServo.class, "inspin1");
+        roll_right = hardwareMap.get(CRServo.class, "inspin2");
+
+        up_left = hardwareMap.get(CRServo.class, "spinup1");
+        up_right = hardwareMap.get(CRServo.class, "spinup2");
+
+        kickup = hardwareMap.get(Servo.class, "kickup");
 
         //elevation = hardwareMap.get(Servo.class, "elevate");
 
@@ -100,10 +110,42 @@ while(opModeIsActive()) {
     boolean manual_aim = gamepad2.left_bumper;
     double manual_power = gamepad2.right_stick_x;
 
+    boolean inOn = gamepad1.a;
+    boolean kick = gamepad1.b;
+    boolean spinny = gamepad1.x;
+
     double powerFL = (-y - x + rx);
     double powerBL = (y - x - rx);
     double powerFR = (y - x + rx);
     double powerBR = (-y - x - rx);
+
+
+    if(inOn){
+        intake.setPower(1);
+
+
+    }else{
+        intake.setPower(0);
+
+
+    }
+    if(spinny){
+        roll_left.setPower(1);
+        roll_right.setPower(-1);
+        up_left.setPower(-1);
+        up_right.setPower(1);
+    } else{
+        roll_left.setPower(0);
+        roll_right.setPower(0);
+        up_left.setPower(0);
+        up_right.setPower(0);
+    }
+    if(kick){
+        kickup.setPosition(0);
+    }else{
+        kickup.setPosition(1);
+    }
+
 
 //    if (gamepad1.a && toggleReady) {
 //        toggleReady = false; // Set toggle to not ready to prevent re-triggering
