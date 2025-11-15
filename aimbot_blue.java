@@ -217,17 +217,21 @@ public class aimbot_blue extends LinearOpMode {
 
                 //telemetry.addData("Fiducial: ", id);
 
-                if (tx > 3 && yes) {
-                    turret.setPower(0.8);
-                    sleep(10);
-                    continue;
-                } else if (tx < -3 && yes) {
+                if(tx > 3 && yes) {
                     turret.setPower(-0.8);
                     sleep(10);
-                    continue;
+                } else if(tx > 1 && yes){
+                    turret.setPower(-0.2);
+                    sleep(10);
+                } else if(tx < -1 && yes){
+                    turret.setPower(0.2);
+                    sleep(10);
+                } else if(tx < -3 && yes) {
+                    turret.setPower(0.8);
+                    sleep(10);
                 } else {
                     turret.setPower(0);
-                    continue;
+
                 }
             } else if(manual_aim) {
                 turret.setPower(-manual_power);
