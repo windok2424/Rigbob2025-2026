@@ -100,51 +100,56 @@ public class aimbot_blue extends LinearOpMode {
         boolean ppg = false;
 
 
-while(opModeIsActive()) {
-    //gamepad 1
-    double y = -gamepad1.left_stick_y;
-    double x = gamepad1.left_stick_x;
-    double rx = -gamepad1.right_stick_x;
+        while(opModeIsActive()) {
+            //gamepad 1
+            double y = -gamepad1.left_stick_y;
+            double x = gamepad1.left_stick_x;
+            double rx = -gamepad1.right_stick_x;
 
-    boolean slowMode = gamepad1.left_stick_button;
-    boolean manual_aim = gamepad2.left_bumper;
-    double manual_power = gamepad2.right_stick_x;
+            boolean slowMode = gamepad1.left_stick_button;
+            boolean manual_aim = gamepad2.left_bumper;
+            double manual_power = gamepad2.right_stick_x;
 
-    boolean inOn = gamepad1.a;
-    boolean kick = gamepad1.b;
-    boolean spinny = gamepad1.x;
+            boolean inOn = gamepad1.a;
+            boolean kick = gamepad1.b;
+            boolean spinny = gamepad1.x;
 
-    double powerFL = (-y - x + rx);
-    double powerBL = (y - x - rx);
-    double powerFR = (y - x + rx);
-    double powerBR = (-y - x - rx);
+            double insanity = gamepad1.right_trigger;
 
-
-    if(inOn){
-        intake.setPower(1);
+            double powerFL = (-y - x + rx);
+            double powerBL = (y - x - rx);
+            double powerFR = (y - x + rx);
+            double powerBR = (-y - x - rx);
 
 
-    }else{
-        intake.setPower(0);
+            spin1.setPower(-insanity);
+            spin2.setPower(-insanity);
+
+            if(inOn){
+                intake.setPower(1);
 
 
-    }
-    if(spinny){
-        roll_left.setPower(1);
-        roll_right.setPower(-1);
-        up_left.setPower(-1);
-        up_right.setPower(1);
-    } else{
-        roll_left.setPower(0);
-        roll_right.setPower(0);
-        up_left.setPower(0);
-        up_right.setPower(0);
-    }
-    if(kick){
-        kickup.setPosition(0);
-    }else{
-        kickup.setPosition(1);
-    }
+            }else{
+                intake.setPower(0);
+
+
+            }
+            if(spinny){
+                roll_left.setPower(1);
+                roll_right.setPower(-1);
+                up_left.setPower(-1);
+                up_right.setPower(1);
+            } else{
+                roll_left.setPower(0);
+                roll_right.setPower(0);
+                up_left.setPower(0);
+                up_right.setPower(0);
+            }
+            if(kick){
+                kickup.setPosition(0);
+            }else{
+                kickup.setPosition(1);
+            }
 
 
 //    if (gamepad1.a && toggleReady) {
@@ -161,81 +166,81 @@ while(opModeIsActive()) {
 //        }
 //    }
 
-    // Reset toggleReady when the button is released
+            // Reset toggleReady when the button is released
 //    if (!gamepad1.a) {
 //        toggleReady = true;
 //    }
 
 
-    //telemetry.addData("Restarted", powerBL);
-    telemetry.update();
-    FL.setPower(powerFL);
-    BL.setPower(powerBL);
-    FR.setPower(powerFR);
-    BR.setPower(powerBR);
-    //turret.setPower(1); bad idea to uncomment this. Run it only for 2 seconds
-    LLResult result = limelight.getLatestResult();
-    boolean yes = false;
-    if (result != null && result.isValid() && !manual_aim) {
+            //telemetry.addData("Restarted", powerBL);
+            telemetry.update();
+            FL.setPower(powerFL);
+            BL.setPower(powerBL);
+            FR.setPower(powerFR);
+            BR.setPower(powerBR);
+            //turret.setPower(1); bad idea to uncomment this. Run it only for 2 seconds
+            LLResult result = limelight.getLatestResult();
+            boolean yes = false;
+            if (result != null && result.isValid() && !manual_aim) {
 
 
-        List<FiducialResult> fiducials = result.getFiducialResults();
+                List<FiducialResult> fiducials = result.getFiducialResults();
 
-        for (FiducialResult fiducial : fiducials) {
-            int id = fiducial.getFiducialId(); // The ID number of the fiducial
-            if (id == 20) {
-                yes = true;
-            } else if(id == 21){
-                gpp = true;
-            } else if(id == 22){
-                pgp = true;
-            } else if(id == 23){
-                ppg = true;
-            }
-            telemetry.addData("finished", powerBL);
-        }
+                for (FiducialResult fiducial : fiducials) {
+                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                    if (id == 20) {
+                        yes = true;
+                    } else if(id == 21){
+                        gpp = true;
+                    } else if(id == 22){
+                        pgp = true;
+                    } else if(id == 23){
+                        ppg = true;
+                    }
+                    telemetry.addData("finished", powerBL);
+                }
 
-        //int id = fiducial.getId(); // The ID number of the fiducial... I hope. nay. I pray.
+                //int id = fiducial.getId(); // The ID number of the fiducial... I hope. nay. I pray.
 
-        double tx = result.getTx(); // How far left or right the target is (degrees)
-        double ty = result.getTy(); // How far up or down the target is (degrees)
-        double ta = result.getTa(); // How big the target looks (0%-100% of the image)
+                double tx = result.getTx(); // How far left or right the target is (degrees)
+                double ty = result.getTy(); // How far up or down the target is (degrees)
+                double ta = result.getTa(); // How big the target looks (0%-100% of the image)
 
-        telemetry.addData("Pipeline: ", result.getPipelineIndex());
-        telemetry.addData("Target X", tx);
-        telemetry.addData("Target Y", ty);
-        telemetry.addData("Distance", Distance(ta));
-        telemetry.addData("Target Area", ta);
+                telemetry.addData("Pipeline: ", result.getPipelineIndex());
+                telemetry.addData("Target X", tx);
+                telemetry.addData("Target Y", ty);
+                telemetry.addData("Distance", Distance(ta));
+                telemetry.addData("Target Area", ta);
 
-telemetry.update();
-            //int id = fiducial.getFiducialId(); // The ID    c cx cx of the fiducial
+                telemetry.update();
+                //int id = fiducial.getFiducialId(); // The ID    c cx cx of the fiducial
 
-            //telemetry.addData("Fiducial: ", id);
+                //telemetry.addData("Fiducial: ", id);
 
-            if (tx > 3 && yes) {
-                turret.setPower(0.8);
-                sleep(10);
-                continue;
-            } else if (tx < -3 && yes) {
-                turret.setPower(-0.8);
-                sleep(10);
-                continue;
-            } else {
+                if (tx > 3 && yes) {
+                    turret.setPower(0.8);
+                    sleep(10);
+                    continue;
+                } else if (tx < -3 && yes) {
+                    turret.setPower(-0.8);
+                    sleep(10);
+                    continue;
+                } else {
+                    turret.setPower(0);
+                    continue;
+                }
+            } else if(manual_aim) {
+                turret.setPower(-manual_power);
+                telemetry.addData("Limelight", "Manual Aim");
+                telemetry.update();
+            } else{
                 turret.setPower(0);
-                continue;
+                telemetry.addData("Limelight", "No Targets Found");
+                telemetry.update();
             }
-        } else if(manual_aim) {
-        turret.setPower(-manual_power);
-        telemetry.addData("Limelight", "Manual Aim");
-        telemetry.update();
-    } else{
-        turret.setPower(0);
-        telemetry.addData("Limelight", "No Targets Found");
-        telemetry.update();
-    }
 
 
-}
+        }
 
 
 
