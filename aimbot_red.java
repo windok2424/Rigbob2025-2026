@@ -27,8 +27,8 @@ import com.qualcomm.robotcore.*;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-@TeleOp(name = "aimbot_blue")
-public class aimbot_blue extends LinearOpMode {
+@TeleOp(name = "aimbot_red")
+public class aimbot_red extends LinearOpMode {
 
 
     //--Drive Motors--
