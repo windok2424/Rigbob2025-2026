@@ -2,16 +2,32 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="Holonomic_MoveAndRotate")
-public class Holonomic_Beta extends LinearOpMode {
+@Autonomous(name="Holonomic")
+public class Holonomic extends LinearOpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
+    DcMotor spin1;
+    DcMotor spin2;
+    //--Intake--
+    DcMotor intake;
+    CRServo roll_left;
+    CRServo roll_right;
+
+    CRServo up_left;
+    CRServo up_right;
+
+    Servo kickup;
+    Servo holdfast;
     IMU imu;
+    DcMotor turret;
 
     double x = 0.0, y = 0.0, theta = 0.0;
     double lastXWheel = 0.0, lastYWheel = 0.0;
@@ -26,7 +42,7 @@ public class Holonomic_Beta extends LinearOpMode {
     final double MIN_TRANSLATION_POWER = 0.1;
     final double MIN_ROTATION_POWER = 0.05;
 
-    final double POSITION_TOLERANCE = 1.0;  // cm
+    final double POSITION_TOLERANCE = 10.0;  // cm
     final double ANGLE_TOLERANCE = Math.toRadians(2);
 
     class Pose2d {
@@ -40,6 +56,17 @@ public class Holonomic_Beta extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "FR");
         backLeft   = hardwareMap.get(DcMotor.class, "BL");
         backRight  = hardwareMap.get(DcMotor.class, "BR");
+        intake     = hardwareMap.get(DcMotor.class, "intake");
+        roll_left = hardwareMap.get(CRServo.class, "inspin1");
+        roll_right = hardwareMap.get(CRServo.class, "inspin2");
+        spin1 = hardwareMap.get(DcMotor.class, "shootup");
+        spin2 = hardwareMap.get(DcMotor.class, "shootdown");
+        turret = hardwareMap.get(DcMotor.class, "turret");
+
+        up_left = hardwareMap.get(CRServo.class, "spinup1");
+        up_right = hardwareMap.get(CRServo.class, "spinup2");
+        kickup = hardwareMap.get(Servo.class, "kickup");
+        holdfast = hardwareMap.get(Servo.class, "hold");
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);
@@ -47,9 +74,9 @@ public class Holonomic_Beta extends LinearOpMode {
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters imuParams = new IMU.Parameters(
@@ -67,14 +94,31 @@ public class Holonomic_Beta extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            //moveToTarget(0, 20);
-            rotateToAngle(90);
+            moveToTarget(0, -20, true);
 //            moveToTarget(20, 20);
-//            rotateToAngle(0);
 //            moveToTarget(20, 0);
-//            rotateToAngle(0);
 //            moveToTarget(0, 0);
-//            rotateToAngle(0);
+//            intake.setPower(1);
+//            roll_left.setPower(1);
+//            roll_right.setPower(-1);
+//            up_left.setPower(-1);
+//            up_right.setPower(1);
+//            holdfast.setPosition(1);
+//            spin1.setPower(-1);
+//            spin2.setPower(-1);
+            sleep(999999999);
+            intake.setPower(0);
+            roll_left.setPower(0);
+            roll_right.setPower(0);
+            up_left.setPower(0);
+            up_right.setPower(0);
+            holdfast.setPosition(0);
+//            moveToTarget(20, 20);
+//
+//            moveToTarget(20, 0);
+//
+//            moveToTarget(0, 0);
+//
         }
 
         setMecanumPowers(0,0,0);
@@ -82,7 +126,7 @@ public class Holonomic_Beta extends LinearOpMode {
 
     Pose2d getRobotPose() {
         double xWheel = backLeft.getCurrentPosition() * TICKS_TO_CM;
-        double yWheel = -backRight.getCurrentPosition() * TICKS_TO_CM;
+        double yWheel = -frontLeft.getCurrentPosition() * TICKS_TO_CM;
 
         double deltaXWheel = xWheel - lastXWheel;
         double deltaYWheel = yWheel - lastYWheel;
@@ -107,7 +151,7 @@ public class Holonomic_Beta extends LinearOpMode {
         return angle;
     }
 
-    void moveToTarget(double targetX, double targetY) {
+    void moveToTarget(double targetX, double targetY, boolean runintake) {
         while (opModeIsActive()) {
             Pose2d pose = getRobotPose();
             double targetTheta = 0;
@@ -144,8 +188,17 @@ public class Holonomic_Beta extends LinearOpMode {
 
             if (Math.abs(errorX) < POSITION_TOLERANCE &&
                     Math.abs(errorY) < POSITION_TOLERANCE){
-//                    Math.abs(errorTheta) < ANGLE_TOLERANCE){
                 break;
+            }
+            if(runintake){
+
+
+                intake.setPower(1);
+                roll_left.setPower(1);
+                roll_right.setPower(-1);
+                up_left.setPower(-1);
+                up_right.setPower(1);
+                holdfast.setPosition(1);
             }
         }
 
