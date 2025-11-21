@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -17,9 +18,18 @@ import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 import java.util.List;
-
+import com.acmerobotics.*;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.*;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 @TeleOp(name = "aimbot_blue")
 public class aimbot_blue extends LinearOpMode {
+
 
     //--Drive Motors--
     DcMotorEx FL;
@@ -47,15 +57,31 @@ public class aimbot_blue extends LinearOpMode {
     CRServo up_right;
 
     Servo kickup;
+    Servo holdfast;
 
     //@Override
     //Limelight3A limelight;
+    //PID STUFF
 
 
+    private PIDController turret_pidcontroller;
+    private PIDController shooter;
+    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    public static double fshoot = 0;
 
-    public void runOpMode() throws InterruptedException{
+
+    public static double pturret = 0.05, iturret = 0, dturret = 0.0005;
+    public static double fturret = 0;
+    public static double shottarget = -2300;
+    public static double turrettarget = 400;
+
+    public void runOpMode() throws InterruptedException {
 
         waitForStart();
+
+
+        shooter = new PIDController(pshoot, ishoot, dshoot);
+        turret_pidcontroller = new PIDController(pturret, iturret, dturret);
 
 
         FL = hardwareMap.get(DcMotorEx.class, "FL");
@@ -75,6 +101,8 @@ public class aimbot_blue extends LinearOpMode {
         up_right = hardwareMap.get(CRServo.class, "spinup2");
 
         kickup = hardwareMap.get(Servo.class, "kickup");
+
+        holdfast = hardwareMap.get(Servo.class, "hold");
 
         //elevation = hardwareMap.get(Servo.class, "elevate");
 
@@ -100,11 +128,39 @@ public class aimbot_blue extends LinearOpMode {
         boolean ppg = false;
 
 
-        while(opModeIsActive()) {
+        while (opModeIsActive()) {
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+            turret_pidcontroller.setPID(pturret, iturret, dturret);
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+
             //gamepad 1
             double y = -gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
             double rx = -gamepad1.right_stick_x;
+            double insanity = gamepad1.right_trigger;
+
+            boolean yes = false;
+
 
             boolean slowMode = gamepad1.left_stick_button;
             boolean manual_aim = gamepad2.left_bumper;
@@ -113,42 +169,63 @@ public class aimbot_blue extends LinearOpMode {
             boolean inOn = gamepad1.a;
             boolean kick = gamepad1.b;
             boolean spinny = gamepad1.x;
-
-            double insanity = gamepad1.right_trigger;
+            boolean close = gamepad2.left_bumper;
+            boolean far = gamepad2.right_bumper;
+            boolean holdit = gamepad2.y;
 
             double powerFL = (-y - x + rx);
             double powerBL = (y - x - rx);
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
+            if (close) {
+                shottarget = -2200;
+            }
+            if (far) {
+                shottarget = -1900;
 
-            spin1.setPower(-insanity);
-            spin2.setPower(-insanity);
+            }
 
-            if(inOn){
+            if(holdit){
+                holdfast.setPosition(0);
+            }else{
+                holdfast.setPosition(0.5);
+            }
+
+            if (inOn) {
                 intake.setPower(1);
 
 
-            }else{
+            } else {
                 intake.setPower(0);
 
 
             }
-            if(spinny){
+            if (spinny) {
                 roll_left.setPower(1);
                 roll_right.setPower(-1);
                 up_left.setPower(-1);
                 up_right.setPower(1);
-            } else{
+            } else {
                 roll_left.setPower(0);
                 roll_right.setPower(0);
                 up_left.setPower(0);
                 up_right.setPower(0);
             }
-            if(kick){
+            if (kick) {
                 kickup.setPosition(0);
-            }else{
+            } else {
                 kickup.setPosition(1);
+            }
+
+            if (inOn) {
+                intake.setPower(1);
+
+
+            } else {
+                intake.setPower(0);
+
+
             }
 
 
@@ -178,83 +255,81 @@ public class aimbot_blue extends LinearOpMode {
             BL.setPower(powerBL);
             FR.setPower(powerFR);
             BR.setPower(powerBR);
+
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
             //turret.setPower(1); bad idea to uncomment this. Run it only for 2 seconds
             LLResult result = limelight.getLatestResult();
-            boolean yes = false;
-            if (result != null && result.isValid() && !manual_aim) {
+
+            if (result != null && result.isValid()) {
 
 
                 List<FiducialResult> fiducials = result.getFiducialResults();
 
                 for (FiducialResult fiducial : fiducials) {
                     int id = fiducial.getFiducialId(); // The ID number of the fiducial
-                    if (id == 20) {
-                        yes = true;
-                    } else if(id == 21){
-                        gpp = true;
-                    } else if(id == 22){
-                        pgp = true;
-                    } else if(id == 23){
-                        ppg = true;
-                    }
-                    telemetry.addData("finished", powerBL);
+                    yes = id == 20;
+                    telemetry.addData("Yes", yes);
+                    telemetry.update();
                 }
 
                 //int id = fiducial.getId(); // The ID number of the fiducial... I hope. nay. I pray.
-
-                double tx = result.getTx(); // How far left or right the target is (degrees)
-                double ty = result.getTy(); // How far up or down the target is (degrees)
-                double ta = result.getTa(); // How big the target looks (0%-100% of the image)
+                double tx = 0;
+                double ty = 0;
+                double ta = 0;
 
                 telemetry.addData("Pipeline: ", result.getPipelineIndex());
                 telemetry.addData("Target X", tx);
                 telemetry.addData("Target Y", ty);
-                telemetry.addData("Distance", Distance(ta));
+
                 telemetry.addData("Target Area", ta);
 
                 telemetry.update();
+
+               //THUS IS WHERE TOD ELETE
+                //yes = false;
+
+                if(yes) {
+                    tx = result.getTx(); // How far left or right the target is (degrees)
+                    ty = result.getTy(); // How far up or down the target is (degrees)
+                    ta = result.getTa(); // How big the target looks (0%-100% of the image)
+
+
+                    double turretomega = tx;
+                    turrettarget = 0;
+                    double turretpower = turret_pidcontroller.calculate(turretomega, turrettarget);
+                    boolean manualstop = gamepad1.right_bumper;
+
+
+                    turret.setPower(turretpower);
+
+
+                } else{
+                    tx = 0;
+                    double turretpower = turret_pidcontroller.calculate(tx, turrettarget);
+                    turret.setPower(turretpower);
+                }
+
                 //int id = fiducial.getFiducialId(); // The ID    c cx cx of the fiducial
 
                 //telemetry.addData("Fiducial: ", id);
 
-                if(tx > 3 && yes) {
-                    turret.setPower(-0.8);
-                    sleep(10);
-                } else if(tx > 1 && yes){
-                    turret.setPower(-0.2);
-                    sleep(10);
-                } else if(tx < -1 && yes){
-                    turret.setPower(0.2);
-                    sleep(10);
-                } else if(tx < -3 && yes) {
-                    turret.setPower(0.8);
-                    sleep(10);
-                } else {
-                    turret.setPower(0);
-
+                if (manual_aim) {
+//        turret.setPower(-manual_power);
+//        telemetry.addData("Limelight", "Manual Aim");
+//        telemetry.update();
+//        } else {
+//            turret.setPower(0);
+//        }
                 }
-            } else if(manual_aim) {
-                turret.setPower(-manual_power);
-                telemetry.addData("Limelight", "Manual Aim");
-                telemetry.update();
-            } else{
-                turret.setPower(0);
-                telemetry.addData("Limelight", "No Targets Found");
-                telemetry.update();
+
+
+            }else {
+        turret.setPower(0);
+        telemetry.addData("Limelight", "No Targets Found");
+        telemetry.update();
             }
-
-
         }
-
-
-
-    }
-
-    public double Distance(double ta){
-        //what is this dumbahh thing
-        double scale = 30665.95; //placeholder value, subject to change.
-        double dist = (scale / ((ta*100)*(ta*100)));
-        return dist;
-
     }
 }
