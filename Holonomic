@@ -153,6 +153,8 @@ public class Holonomic extends LinearOpMode {
 
     void moveToTarget(double targetX, double targetY, boolean runintake) {
         while (opModeIsActive()) {
+            double distance = Math.sqrt(Math.pow((0.014 * BL.getCurrentPosition() - 12), 2) + Math.pow((12 - 0.014 * BR.getCurrentPosition() + 60), 2));
+            telemetry.addData("Distance", "(%.1f)", distance);
             Pose2d pose = getRobotPose();
             double targetTheta = 0;
             double errorX = targetX - pose.x;
