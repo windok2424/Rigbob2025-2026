@@ -160,7 +160,7 @@ public class aimbot_blue extends LinearOpMode {
             shooter.setPID(pshoot, ishoot, dshoot);
             turret_pidcontroller.setPID(pturret, iturret, dturret);
             Pose2d pose = getRobotPose();
-            double distance = Math.sqrt(Math.pow(365.76/2-(pose.y), 2) + Math.pow(365.76-(pose.x), 2));
+            double distance = Math.sqrt(Math.pow(365.76/2-(pose.y), 2) + Math.pow(365.76-20.066-(pose.x), 2));
             //In CM
             //365.76cm per side length of field.
             //Intended starting distance: 517.263 (former)
