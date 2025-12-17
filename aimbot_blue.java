@@ -53,31 +53,16 @@ public class aimbot_blue extends LinearOpMode {
     DcMotorEx spin2;
     IMU imu;
 
-    //--Turret Stuff--
-    Servo elevation;
-
     DcMotorEx turret; //turntable motor
     //DcMotorEx spin; //flywheel
 
     //Servo upDown; //up and down servo
-    Limelight3A limelight;
-    final double TICKS_TO_CM = (double) 46 /9002;
+
+    final double TICKS_TO_CM = (double) 46 / 9002;
     double lastXWheel = 0.0, lastYWheel = 0.0;
 
     //--Intake--
     DcMotorEx intake;
-    CRServo roll_left;
-    CRServo roll_right;
-
-    CRServo up_left;
-    CRServo up_right;
-
-    Servo kickup;
-    Servo holdfast;
-
-    //@Override
-    //Limelight3A limelight;
-    //PID STUFF
 
 
     private PIDController turret_pidcontroller;
@@ -95,6 +80,7 @@ public class aimbot_blue extends LinearOpMode {
 
         waitForStart();
 
+        Limelight3A limelight;
 
         shooter = new PIDController(pshoot, ishoot, dshoot);
         turret_pidcontroller = new PIDController(pturret, iturret, dturret);
@@ -118,22 +104,12 @@ public class aimbot_blue extends LinearOpMode {
         spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
-
-        roll_left = hardwareMap.get(CRServo.class, "inspin1");
-        roll_right = hardwareMap.get(CRServo.class, "inspin2");
-
-        up_left = hardwareMap.get(CRServo.class, "spinup1");
-        up_right = hardwareMap.get(CRServo.class, "spinup2");
-
-        kickup = hardwareMap.get(Servo.class, "kickup");
-
-        holdfast = hardwareMap.get(Servo.class, "hold");
-
-        //elevation = hardwareMap.get(Servo.class, "elevate");
-
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.start();
         limelight.pipelineSwitch(0);
+
+        //elevation = hardwareMap.get(Servo.class, "elevate");
+
 
         ElapsedTime runtime = new ElapsedTime();
         telemetry.addData("Current Runtime: ", runtime);
@@ -159,21 +135,10 @@ public class aimbot_blue extends LinearOpMode {
 
             shooter.setPID(pshoot, ishoot, dshoot);
             turret_pidcontroller.setPID(pturret, iturret, dturret);
-            Pose2d pose = getRobotPose();
-            double distance = Math.sqrt(Math.pow(365.76/2-(pose.y), 2) + Math.pow(365.76-20.066-(pose.x), 2));
-            //In CM
-            //365.76cm per side length of field.
-            //Intended starting distance: 517.263 (former)
-            double distancex =pose.x;
-            double distancey =pose.y;
-            telemetry.addData("Distance", "(%.1f)", distance);
-            telemetry.addData("Distance x", "(%.1f)", distancex);
-            telemetry.addData("Distance y", "(%.1f)", distancey);
+
 
             //x=9002ticks =46cm
             //945.2
-
-
 
 
             double omega = spin1.getVelocity();
@@ -181,6 +146,11 @@ public class aimbot_blue extends LinearOpMode {
 
 
             double pidshot = shooter.calculate(omega, shottarget);
+            Pose2d pose = getRobotPose();
+            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pose.y), 2) + Math.pow(365.76 + 20.066 + (pose.x), 2));
+            telemetry.addData("Distance:", distance);
+            telemetry.addData("x distance", pose.x);
+            telemetry.addData("y distance", pose.y);
             omega = omega;
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
@@ -196,7 +166,7 @@ public class aimbot_blue extends LinearOpMode {
             //gamepad 1
             double y = gamepad1.left_stick_y;
             double x = -gamepad1.left_stick_x;
-            double rx = gamepad1.right_trigger -gamepad1.left_trigger;
+            double rx = gamepad1.right_trigger - gamepad1.left_trigger;
             //double insanity = gamepad1.right_trigger;
 
             boolean yes = false;
@@ -213,12 +183,12 @@ public class aimbot_blue extends LinearOpMode {
             boolean far = gamepad2.dpad_up;
             boolean holdit = gamepad1.b;
             boolean runandkickup = gamepad2.y;
+            boolean slowmode = gamepad2.right_bumper;
 
             double powerFL = (-y - x + rx);
             double powerBL = (y - x - rx);
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
-
 
 
             if (far) {
@@ -229,12 +199,6 @@ public class aimbot_blue extends LinearOpMode {
 
             }
 
-            if(holdit){
-                holdfast.setPosition(1);
-            }else{
-                holdfast.setPosition(0);
-            }
-
             if (inOn) {
                 intake.setPower(1);
 
@@ -244,89 +208,27 @@ public class aimbot_blue extends LinearOpMode {
 
 
             }
-            if (spinny) {
-                roll_left.setPower(1);
-                roll_right.setPower(-1);
-                up_left.setPower(-1);
-                up_right.setPower(1);
-            } else {
-
-                if(runandkickup) {
-
-                    roll_left.setPower(1);
-                    roll_right.setPower(-1);
-                    up_left.setPower(-1);
-                    up_right.setPower(1);
-                    kickup.setPosition(0);
-                }
-                else{
-
-                    roll_left.setPower(0);
-                    roll_right.setPower(0);
-                    up_left.setPower(0);
-                    up_right.setPower(0);
-                }
-            }
-            if (kick) {
-                kickup.setPosition(0);
-            } else {
-
-                if(runandkickup) {
-
-                    roll_left.setPower(1);
-                    roll_right.setPower(-1);
-                    up_left.setPower(-1);
-                    up_right.setPower(1);
-                    kickup.setPosition(0);
-                }
-                else {
-
-                    kickup.setPosition(1);
-                }
-            }
-
-            if (inOn) {
-                intake.setPower(1);
-
-
-            } else {
-                intake.setPower(0);
-
-
-            }
-
-
-//    if (gamepad1.a && toggleReady) {
-//        toggleReady = false; // Set toggle to not ready to prevent re-triggering
-//
-//        // Toggle the servo state
-//        servoState = !servoState;
-//
-//        // Set servo position based on the new state
-//        if (servoState) {
-//            .setPosition(1.0); // Example: 1.0 for open position
-//        } else {
-//            myServo.setPosition(0.0); // Example: 0.0 for closed position
-//        }
-//    }
-
-            // Reset toggleReady when the button is released
-//    if (!gamepad1.a) {
-//        toggleReady = true;
-//    }
-
-
             telemetry.addData("Restarted", powerBL);
             telemetry.update();
-            FL.setPower(powerFL);
-             BL.setPower(powerBL);
-            FR.setPower(powerFR);
-            BR.setPower(powerBR);
+
+            if (slowmode) {
+                FL.setPower(powerFL * 0.3);
+                BL.setPower(powerBL * 0.3);
+                FR.setPower(powerFR * 0.3);
+                BR.setPower(powerBR * 0.3);
 
 
-            spin1.setPower(powershot);
-            spin2.setPower(powershot);
-            //turret.setPower(1); bad idea to uncomment this. Run it only for 2 seconds
+            } else {
+                FL.setPower(powerFL);
+                BL.setPower(powerBL);
+                FR.setPower(powerFR);
+                BR.setPower(powerBR);
+
+
+            }
+
+            spin1.setPower(-powershot);
+            spin2.setPower(-powershot);
             LLResult result = limelight.getLatestResult();
 
             if (result != null && result.isValid()) {
@@ -337,7 +239,6 @@ public class aimbot_blue extends LinearOpMode {
                 for (FiducialResult fiducial : fiducials) {
                     int id = fiducial.getFiducialId(); // The ID number of the fiducial
                     yes = id == 20;
-                    //yes = true;
                     telemetry.addData("Yes", yes);
                     telemetry.update();
                 }
@@ -355,17 +256,11 @@ public class aimbot_blue extends LinearOpMode {
 
                 telemetry.update();
 
-
                 //THUS IS WHERE TOD ELETE
                 //yes = false;
-                telemetry.addData("this is yes: ", yes);
-                telemetry.update();
-                if (yes) {
-                    tx = result.getTx(); // How far left or right the target is (degrees)
 
-                    if (tx == 0) {
-                        gamepad2.rumble(10);
-                    }
+                if(yes) {
+                    tx = result.getTx(); // How far left or right the target is (degrees)
                     ty = result.getTy(); // How far up or down the target is (degrees)
                     ta = result.getTa(); // How big the target looks (0%-100% of the image)
 
@@ -373,49 +268,59 @@ public class aimbot_blue extends LinearOpMode {
                     double turretomega = tx;
                     turrettarget = 0;
                     double turretpower = turret_pidcontroller.calculate(turretomega, turrettarget);
-                    //boolean manualstop = gamepad1.right_bumper;
+                    boolean manualstop = gamepad1.right_bumper;
 
 
                     turret.setPower(turretpower);
 
 
+                } else{
+                    tx = 0;
+                    double turretpower = turret_pidcontroller.calculate(tx, turrettarget);
+                    turret.setPower(turretpower);
                 }
 
                 //int id = fiducial.getFiducialId(); // The ID    c cx cx of the fiducial
 
                 //telemetry.addData("Fiducial: ", id);
 
+                if (manual_aim) {
+//        turret.setPower(-manual_power);
+//        telemetry.addData("Limelight", "Manual Aim");
+//        telemetry.update();
+//        } else {
+//            turret.setPower(0);
+//        }
+                }
 
-            }else if(manual_aim){
-                turret.setPower(manual_power);
-                telemetry.addData("Limelight", "Manual Aim");
-                telemetry.update();
+
             }else {
                 turret.setPower(0);
                 telemetry.addData("Limelight", "No Targets Found");
-                //telemetry.update();
+                telemetry.update();
             }
         }
     }
-    Pose2d getRobotPose() {
-        double xWheel = BL.getCurrentPosition() * TICKS_TO_CM;
-        double yWheel = -FL.getCurrentPosition() * TICKS_TO_CM;
 
-        double deltaXWheel = xWheel - lastXWheel;
-        double deltaYWheel = yWheel - lastYWheel;
+        Pose2d getRobotPose () {
+            double xWheel = BL.getCurrentPosition() * TICKS_TO_CM;
+            double yWheel = -FL.getCurrentPosition() * TICKS_TO_CM;
 
-        lastXWheel = xWheel;
-        lastYWheel = yWheel;
+            double deltaXWheel = xWheel - lastXWheel;
+            double deltaYWheel = yWheel - lastYWheel;
 
-        theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            lastXWheel = xWheel;
+            lastYWheel = yWheel;
 
-        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
-        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
+            theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-        x += deltaX;
-        y += deltaY;
+            double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
+            double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
 
-        return new Pose2d(x, y, theta);
+            x += deltaX;
+            y += deltaY;
+
+            return new Pose2d(x, y, theta);
+        }
     }
-}
 
