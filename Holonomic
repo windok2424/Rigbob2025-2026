@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,11 +15,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name="Holonomic")
-public class Holonomic extends LinearOpMode {
-
+public class Holonomic_blue extends LinearOpMode {
+    public PIDController rotation;
+    public static double prot = 0.08, irot = 0, drot = 0.00001;
+    public static double targetrot = 0;
+    public static double f = 0;
     DcMotor frontLeft, frontRight, backLeft, backRight;
-    DcMotor spin1;
-    DcMotor spin2;
+    DcMotorEx spin1;
+    DcMotorEx spin2;
     //--Intake--
     DcMotor intake;
     CRServo roll_left;
@@ -34,15 +41,19 @@ public class Holonomic extends LinearOpMode {
 
     final double TICKS_PER_REV = 8192;
     final double WHEEL_DIAMETER_CM = 3.0;
-    final double TICKS_TO_CM = (Math.PI * WHEEL_DIAMETER_CM) / TICKS_PER_REV;
+    final double TICKS_TO_CM = 46/9002;
 
-    final double Kp_xy = 0.07;
+    //final double Kp_xy = 0.14;
+    final double Kp_xy = 0.3;
     final double Kp_theta = 0.12;
+    public PIDController shooter;
+    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    private double shottarget = -2340;
 
     final double MIN_TRANSLATION_POWER = 0.1;
     final double MIN_ROTATION_POWER = 0.05;
 
-    final double POSITION_TOLERANCE = 10.0;  // cm
+    final double POSITION_TOLERANCE = 1.0;  // cm
     final double ANGLE_TOLERANCE = Math.toRadians(2);
 
     class Pose2d {
@@ -52,6 +63,12 @@ public class Holonomic extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        rotation = new PIDController(prot, irot , drot);
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        shooter = new PIDController(pshoot,ishoot,dshoot);
+
+
+
         frontLeft  = hardwareMap.get(DcMotor.class, "FL");
         frontRight = hardwareMap.get(DcMotor.class, "FR");
         backLeft   = hardwareMap.get(DcMotor.class, "BL");
@@ -59,8 +76,8 @@ public class Holonomic extends LinearOpMode {
         intake     = hardwareMap.get(DcMotor.class, "intake");
         roll_left = hardwareMap.get(CRServo.class, "inspin1");
         roll_right = hardwareMap.get(CRServo.class, "inspin2");
-        spin1 = hardwareMap.get(DcMotor.class, "shootup");
-        spin2 = hardwareMap.get(DcMotor.class, "shootdown");
+        spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
+        spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
         turret = hardwareMap.get(DcMotor.class, "turret");
 
         up_left = hardwareMap.get(CRServo.class, "spinup1");
@@ -93,26 +110,53 @@ public class Holonomic extends LinearOpMode {
 
         waitForStart();
 
+
+
         if (opModeIsActive()) {
-            moveToTarget(0, -20, true);
-//            moveToTarget(20, 20);
-//            moveToTarget(20, 0);
-//            moveToTarget(0, 0);
-//            intake.setPower(1);
-//            roll_left.setPower(1);
-//            roll_right.setPower(-1);
-//            up_left.setPower(-1);
-//            up_right.setPower(1);
-//            holdfast.setPosition(1);
-//            spin1.setPower(-1);
-//            spin2.setPower(-1);
-            sleep(999999999);
-            intake.setPower(0);
-            roll_left.setPower(0);
-            roll_right.setPower(0);
-            up_left.setPower(0);
-            up_right.setPower(0);
+            holdfast.setPosition(1);
+
+            justrpm(3);
+            shoot(5,    false);
+
+            shoot(1, true);
+
+            //movemnet
+
+            moveToTarget(-15, -9 ,true);
+
+
             holdfast.setPosition(0);
+//            sleep(1000);
+            moveToTarget(-14, -28 , true);
+            //this is after intake 1
+            moveToTarget(0,0,false);
+            rotate(0);
+            holdfast.setPosition(1);
+
+            sleep(1000);
+
+            //time to shoot
+
+            justrpm(2);
+            shoot(4,    false);
+            shoot(1, true);
+
+
+
+//            moveToTarget(-27.5,-9,true);
+//            rotate(0);
+//            moveToTarget(-26.5,-28.5,true);
+//            moveToTarget(0,0,false);
+//            holdfast.setPosition(1);
+//            rotate(0);
+//            sleep(1000);
+//
+//            justrpm(2);
+//            shoot(2,    false);
+//            shoot(1, true);
+//            moveToTarget(-15, -9 ,true);
+//
+
 //            moveToTarget(20, 20);
 //
 //            moveToTarget(20, 0);
@@ -151,10 +195,156 @@ public class Holonomic extends LinearOpMode {
         return angle;
     }
 
+    void rotate(double angle ){
+        while(opModeIsActive()) {
+            targetrot = angle;
+            rotation.setPID(prot, irot, drot);
+            double omegarot = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+
+            telemetry.addData("omega :", omegarot);
+            telemetry.addData("target: ", targetrot);
+            telemetry.update();
+
+            double pidshot = rotation.calculate(omegarot, targetrot);
+
+            double ff = Math.cos(Math.toRadians(targetrot)) * 0;
+
+            double pow = pidshot + ff;
+//
+//        shootup.setPower(powershot);
+//        shootdown.setPower(powershot);
+            double powerFL = +pow;
+            double powerBL = -pow;
+            double powerFR = +pow;
+            double powerBR = -pow;
+            frontLeft.setPower(powerFL);
+            backLeft.setPower(powerBL);
+            frontRight.setPower(powerFR);
+            backRight.setPower(powerBR);
+            double errorofit = targetrot-omegarot;
+
+
+            if(-0.3 < errorofit && errorofit < 0.3){
+                break;
+
+            }
+
+        }
+
+    }
+
+    void justrpm(double last){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
+
+            if(current > last){
+                break;
+
+            }
+        }
+
+
+
+
+
+    }
+    void shoot(double last, boolean kickuptrue){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        holdfast.setPosition(1);
+        sleep(500);
+        while(opModeIsActive()){
+            current = sec.seconds();
+
+            intake.setPower(1);
+            roll_left.setPower(1);
+            roll_right.setPower(-1);
+            up_left.setPower(-1);
+            up_right.setPower(1);
+
+            if(kickuptrue){
+                kickup.setPosition(0);
+
+            }
+            else {
+
+                kickup.setPosition(1);
+            }
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
+
+            if(current >  last){
+                break;
+
+            }
+        }
+
+
+
+    }
+
+
     void moveToTarget(double targetX, double targetY, boolean runintake) {
         while (opModeIsActive()) {
-            double distance = Math.sqrt(Math.pow((0.014 * BL.getCurrentPosition() - 12), 2) + Math.pow((12 - 0.014 * BR.getCurrentPosition() + 60), 2));
-            telemetry.addData("Distance", "(%.1f)", distance);
+            kickup.setPosition(1);
             Pose2d pose = getRobotPose();
             double targetTheta = 0;
             double errorX = targetX - pose.x;
@@ -200,7 +390,19 @@ public class Holonomic extends LinearOpMode {
                 roll_right.setPower(-1);
                 up_left.setPower(-1);
                 up_right.setPower(1);
+                holdfast.setPosition(0);
+
+            }
+            else{
+                sleep(100);
+                intake.setPower(1);
+                roll_left.setPower(0);
+                roll_right.setPower(-0);
+                up_left.setPower(-0);
+                up_right.setPower(0);
                 holdfast.setPosition(1);
+
+
             }
         }
 
@@ -221,6 +423,32 @@ public class Holonomic extends LinearOpMode {
         frontRight.setPower(fr);
         backLeft.setPower(bl);
         backRight.setPower(br);
+    }
+    void kickupball(double last){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
+            roll_left.setPower(1);
+            roll_right.setPower(-1);
+            up_left.setPower(-1);
+            up_right.setPower(1);
+            kickup.setPosition(1);
+            if(current == last){
+                kickup.setPosition(0);
+                break;
+
+            }
+        }
+
+
+
+
+
     }
 
     void rotateToAngle(double targetAngleDegrees) {
