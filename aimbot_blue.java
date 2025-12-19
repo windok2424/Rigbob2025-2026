@@ -51,6 +51,7 @@ public class aimbot_blue extends LinearOpMode {
     //--uhh spin thingies--
     DcMotorEx spin1;
     DcMotorEx spin2;
+    Servo blocker;
     IMU imu;
 
     DcMotorEx turret; //turntable motor
@@ -75,6 +76,7 @@ public class aimbot_blue extends LinearOpMode {
     public static double fturret = 0;
     public static double shottarget = -2300;
     public static double turrettarget = 400;
+
 
     public void runOpMode() throws InterruptedException {
 
@@ -102,6 +104,7 @@ public class aimbot_blue extends LinearOpMode {
         turret = hardwareMap.get(DcMotorEx.class, "turret");
         spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
         spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
+        blocker = hardwareMap.get(Servo.class, "hold");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -123,6 +126,7 @@ public class aimbot_blue extends LinearOpMode {
         BL.setDirection((DcMotorSimple.Direction.REVERSE));
         //motorBL.setDirection((DcMotorSimple.Direction.REVERSE));
         BR.setDirection((DcMotorSimple.Direction.REVERSE));
+
 
         boolean gpp = false;
         boolean pgp = false;
@@ -190,6 +194,15 @@ public class aimbot_blue extends LinearOpMode {
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
+            if(holdit){
+                blocker.setPosition(0);
+                intake.setPower(1);
+
+            }
+            else{
+
+                blocker.setPosition(1);
+            }
 
             if (far) {
                 shottarget = -2200;
@@ -227,8 +240,8 @@ public class aimbot_blue extends LinearOpMode {
 
             }
 
-            spin1.setPower(-powershot);
-            spin2.setPower(-powershot);
+            spin1.setPower(1);
+            spin2.setPower(1);
             LLResult result = limelight.getLatestResult();
 
             if (result != null && result.isValid()) {
