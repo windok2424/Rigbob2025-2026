@@ -161,11 +161,19 @@ public class bullsheisse extends LinearOpMode {
         }
     }
     void intake(boolean doit, double last){
-        if (doit){
-            intake.setPower(1);
-            blocker.setPosition(0);
-        } else{
-            intake.setPower(0);
+        ElapsedTime seconds = new ElapsedTime();
+        seconds.reset();
+        while(opModeIsActive()) {
+            double secs = seconds.seconds();
+            if (doit) {
+                intake.setPower(1);
+                blocker.setPosition(0);
+            } else {
+                intake.setPower(0);
+            }
+            if(secs>last){
+                break;
+            }
         }
     }
 
