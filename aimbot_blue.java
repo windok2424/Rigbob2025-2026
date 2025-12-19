@@ -216,7 +216,7 @@ public class aimbot_blue extends LinearOpMode {
                 intake.setPower(1);
 
 
-            } else {
+            } else if(!holdit) {
                 intake.setPower(0);
 
 
@@ -315,25 +315,24 @@ public class aimbot_blue extends LinearOpMode {
         }
     }
 
-        Pose2d getRobotPose () {
-            double xWheel = BL.getCurrentPosition() * TICKS_TO_CM;
-            double yWheel = -FL.getCurrentPosition() * TICKS_TO_CM;
+    Pose2d getRobotPose () {
+        double xWheel = BL.getCurrentPosition() * TICKS_TO_CM;
+        double yWheel = -FL.getCurrentPosition() * TICKS_TO_CM;
 
-            double deltaXWheel = xWheel - lastXWheel;
-            double deltaYWheel = yWheel - lastYWheel;
+        double deltaXWheel = xWheel - lastXWheel;
+        double deltaYWheel = yWheel - lastYWheel;
 
-            lastXWheel = xWheel;
-            lastYWheel = yWheel;
+        lastXWheel = xWheel;
+        lastYWheel = yWheel;
 
-            theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-            double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
-            double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
+        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
+        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
 
-            x += deltaX;
-            y += deltaY;
+        x += deltaX;
+        y += deltaY;
 
-            return new Pose2d(x, y, theta);
-        }
+        return new Pose2d(x, y, theta);
     }
-
+}
