@@ -1,148 +1,196 @@
 package org.firstinspires.ftc.teamcode;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="Holonomic")
-public class Holonomic extends LinearOpMode {
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.*;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 
+import java.util.List;
+import com.acmerobotics.*;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.*;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+@Autonomous(name = "Scratch")
+public class asone extends LinearOpMode {
+
+    // Motors
     DcMotor frontLeft, frontRight, backLeft, backRight;
-    DcMotor spin1;
-    DcMotor spin2;
+    DcMotorEx spin1;
+    DcMotorEx spin2;
     //--Intake--
     DcMotor intake;
-    CRServo roll_left;
-    CRServo roll_right;
-
-    CRServo up_left;
-    CRServo up_right;
-
-    Servo kickup;
-    Servo holdfast;
-    IMU imu;
     DcMotor turret;
 
-    double x = 0.0, y = 0.0, theta = 0.0;
-    double lastXWheel = 0.0, lastYWheel = 0.0;
+    // Pinpoint
+    GoBildaPinpointDriver pinpoint;
 
-    final double TICKS_PER_REV = 8192;
-    final double WHEEL_DIAMETER_CM = 3.0;
-    final double TICKS_TO_CM = (Math.PI * WHEEL_DIAMETER_CM) / TICKS_PER_REV;
+    // Control constants
+    public PIDController xpos;
+    public PIDController ypos;
+    public PIDController thetapos;
+    public static double px = -0.05, ix = 0.1, dx = 0.001;
+    public static double targetx = 0;
+    public static double py = -0.05, iy = 0.1, dy = 0.001;
+    public static double targety = 0;
+    public static double ptheta = 0.05, itheta = 0, dtheta = 0;
+    public static double targettheta = 0;
+    public PIDController shooter;
+    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    private double shottarget = -2340;
+    final double MIN_TRANSLATION_POWER = 0.12;
+    final double MIN_ROTATION_POWER = 0.06;
 
-    final double Kp_xy = 0.07;
-    final double Kp_theta = 0.12;
-
-    final double MIN_TRANSLATION_POWER = 0.1;
-    final double MIN_ROTATION_POWER = 0.05;
-
-    final double POSITION_TOLERANCE = 10.0;  // cm
-    final double ANGLE_TOLERANCE = Math.toRadians(2);
-
-    class Pose2d {
-        double x, y, theta;
-        Pose2d(double x, double y, double theta) { this.x = x; this.y = y; this.theta = theta; }
-    }
+    final double POSITION_TOLERANCE_CM = 2.0;
+    final double ANGLE_TOLERANCE_RAD = Math.toRadians(2);
 
     @Override
     public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        shooter = new PIDController(pshoot,ishoot,dshoot);
+        xpos = new PIDController(px, ix , dx);
+        ypos = new PIDController(py, iy , dy);
+        thetapos = new PIDController(ptheta, itheta , dtheta);
+
+        // Motor mapping
         frontLeft  = hardwareMap.get(DcMotor.class, "FL");
         frontRight = hardwareMap.get(DcMotor.class, "FR");
         backLeft   = hardwareMap.get(DcMotor.class, "BL");
         backRight  = hardwareMap.get(DcMotor.class, "BR");
         intake     = hardwareMap.get(DcMotor.class, "intake");
-        roll_left = hardwareMap.get(CRServo.class, "inspin1");
-        roll_right = hardwareMap.get(CRServo.class, "inspin2");
-        spin1 = hardwareMap.get(DcMotor.class, "shootup");
-        spin2 = hardwareMap.get(DcMotor.class, "shootdown");
+        spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
+        spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
+
         turret = hardwareMap.get(DcMotor.class, "turret");
 
-        up_left = hardwareMap.get(CRServo.class, "spinup1");
-        up_right = hardwareMap.get(CRServo.class, "spinup2");
-        kickup = hardwareMap.get(Servo.class, "kickup");
-        holdfast = hardwareMap.get(Servo.class, "hold");
-
+        // Motor directions (mecanum)
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.FORWARD);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // Pinpoint setup
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
-        imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters imuParams = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
-                )
+        pinpoint.setEncoderResolution(
+                GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD
         );
-        imu.initialize(imuParams);
-        imu.resetYaw();
 
-        telemetry.addLine("Initialized. Waiting for start...");
+        pinpoint.setOffsets(0, 0, DistanceUnit.MM);
+
+        pinpoint.setEncoderDirections(
+                GoBildaPinpointDriver.EncoderDirection.REVERSED,
+                GoBildaPinpointDriver.EncoderDirection.REVERSED
+        );
+
+        telemetry.addLine("Ready. Waiting for start.");
         telemetry.update();
 
         waitForStart();
 
-        if (opModeIsActive()) {
-            moveToTarget(0, -20, true);
-//            moveToTarget(20, 20);
-//            moveToTarget(20, 0);
-//            moveToTarget(0, 0);
-//            intake.setPower(1);
-//            roll_left.setPower(1);
-//            roll_right.setPower(-1);
-//            up_left.setPower(-1);
-//            up_right.setPower(1);
-//            holdfast.setPosition(1);
-//            spin1.setPower(-1);
-//            spin2.setPower(-1);
-            sleep(999999999);
-            intake.setPower(0);
-            roll_left.setPower(0);
-            roll_right.setPower(0);
-            up_left.setPower(0);
-            up_right.setPower(0);
-            holdfast.setPosition(0);
-//            moveToTarget(20, 20);
-//
-//            moveToTarget(20, 0);
-//
-//            moveToTarget(0, 0);
-//
+        // Calibrate IMU ONCE
+        pinpoint.resetPosAndIMU();
+        sleep(500);
+
+
+
+        while (opModeIsActive()) {
+            // Drive to (0, 20 cm) facing 0°
+            move(0, 20, 0);
+            sleep(250);
+            move(-20, 20, 0);
+            sleep(250);
+            move(-20,0,0);
+            sleep(250);
+            move(0,0,0);
+            // Stop completely
+            setMecanumPowers(0, 0, 0);
+            sleep(50);
+        }
+    }
+    void move(double x, double y, double angle) {
+        while (opModeIsActive()) {
+            pinpoint.update();
+            targetx = x;
+            targety = y;
+            targettheta = angle;
+            xpos.setPID(px, ix, dx);
+            ypos.setPID(py, iy, dx);
+            thetapos.setPID(ptheta, itheta, dtheta);
+            double currentx = pinpoint.getPosX(DistanceUnit.CM);
+            double currenty = -pinpoint.getPosY(DistanceUnit.CM);
+            double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
+            double errorX = targetx - currentx;
+            double errorY = targety - currenty;
+            double errortheta = targettheta - currenttheta;
+
+
+            telemetry.addData("x :", currentx);
+            telemetry.addData("target x: ", targetx);
+            telemetry.addData("y :", currenty);
+            telemetry.addData("target y: ", targety);
+            telemetry.addData("theta :", currenttheta);
+            telemetry.addData("target theta: ", targettheta);
+            telemetry.update();
+
+            double pidx = xpos.calculate(currentx, targetx);
+            double pidy = ypos.calculate(currenty, targety);
+            double pidtheta = thetapos.calculate(currenttheta, targettheta);
+            setMecanumPowers(pidx, pidy, pidtheta);
+
+            telemetry.addData("Target", "(%.1f, %.1f)", targetx, targety);
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)",
+                    currentx, currenty, currenttheta);
+            telemetry.update();
+
+            if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errorY) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
+                break;
+            }
         }
 
-        setMecanumPowers(0,0,0);
     }
+    void setMecanumPowers(double strafe, double forward, double rotate) {
 
-    Pose2d getRobotPose() {
-        double xWheel = backLeft.getCurrentPosition() * TICKS_TO_CM;
-        double yWheel = -frontLeft.getCurrentPosition() * TICKS_TO_CM;
+        double fl = forward + strafe + rotate;
+        double fr = -forward +strafe - rotate;
+        double bl = -forward + strafe + rotate;
+        double br = forward + strafe - rotate;
 
-        double deltaXWheel = xWheel - lastXWheel;
-        double deltaYWheel = yWheel - lastYWheel;
+        double max = Math.max(1.0,
+                Math.max(Math.abs(fl),
+                        Math.max(Math.abs(fr),
+                                Math.max(Math.abs(bl), Math.abs(br)))));
 
-        lastXWheel = xWheel;
-        lastYWheel = yWheel;
-
-        theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
-        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
-
-        x += deltaX;
-        y += deltaY;
-
-        return new Pose2d(x, y, theta);
+        frontLeft.setPower(fl / max);
+        frontRight.setPower(fr / max);
+        backLeft.setPower(bl / max);
+        backRight.setPower(br / max);
     }
 
     double normalizeAngle(double angle) {
@@ -150,121 +198,121 @@ public class Holonomic extends LinearOpMode {
         while (angle < -Math.PI) angle += 2 * Math.PI;
         return angle;
     }
+    void kickupball(double last){
+        ElapsedTime sec = new ElapsedTime();
 
-    void moveToTarget(double targetX, double targetY, boolean runintake) {
-        while (opModeIsActive()) {
-            double distance = Math.sqrt(Math.pow((0.014 * BL.getCurrentPosition() - 12), 2) + Math.pow((12 - 0.014 * BR.getCurrentPosition() + 60), 2));
-            telemetry.addData("Distance", "(%.1f)", distance);
-            Pose2d pose = getRobotPose();
-            double targetTheta = 0;
-            double errorX = targetX - pose.x;
-            double errorY = targetY - pose.y;
-            double errorTheta = normalizeAngle(targetTheta - pose.theta);
 
-            // Convert to robot-relative frame
-            double errorForward = errorX * Math.cos(pose.theta) + errorY * Math.sin(pose.theta);
-            double errorStrafe  = -errorX * Math.sin(pose.theta) + errorY * Math.cos(pose.theta);
 
-            // Apply proportional control
-            double driveForward = Kp_xy * errorForward;
-            double driveStrafe  = Kp_xy * errorStrafe;
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
 
-            // Ensure minimum translation
-            if (Math.abs(driveForward) < MIN_TRANSLATION_POWER && Math.abs(errorForward) > 0.5)
-                driveForward = Math.signum(driveForward) * MIN_TRANSLATION_POWER;
-            if (Math.abs(driveStrafe) < MIN_TRANSLATION_POWER && Math.abs(errorStrafe) > 0.5)
-                driveStrafe = Math.signum(driveStrafe) * MIN_TRANSLATION_POWER;
+            if(current == last){
 
-            // Rotation control with deadzone
-            double turnPower = Kp_theta * errorTheta;
-            if (Math.abs(errorTheta) < Math.toRadians(1)) turnPower = 0;
-            else if (Math.abs(turnPower) < MIN_ROTATION_POWER) turnPower = Math.signum(turnPower) * MIN_ROTATION_POWER;
-
-            // Apply powers to mecanum
-            setMecanumPowers(driveStrafe, driveForward, turnPower);
-
-            telemetry.addData("Target", "(%.1f, %.1f, %.1f°)", targetX, targetY, Math.toDegrees(targetTheta));
-            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", pose.x, pose.y, Math.toDegrees(pose.theta));
-//            telemetry.addData("Error θ", "%.1f°", Math.toDegrees(errorTheta));
-            telemetry.update();
-
-            if (Math.abs(errorX) < POSITION_TOLERANCE &&
-                    Math.abs(errorY) < POSITION_TOLERANCE){
                 break;
-            }
-            if(runintake){
 
-
-                intake.setPower(1);
-                roll_left.setPower(1);
-                roll_right.setPower(-1);
-                up_left.setPower(-1);
-                up_right.setPower(1);
-                holdfast.setPosition(1);
             }
         }
 
-        setMecanumPowers(0,0,0);
+
+
+
+
     }
+    void justrpm(double last){
+        ElapsedTime sec = new ElapsedTime();
 
-    void setMecanumPowers(double strafe, double forward, double rotate) {
-        double fl = forward + strafe + rotate;
-        double fr = forward - strafe - rotate;
-        double bl = forward - strafe + rotate;
-        double br = forward + strafe - rotate;
 
-        double max = Math.max(1.0, Math.max(Math.abs(fl),
-                Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br)))));
-        fl /= max; fr /= max; bl /= max; br /= max;
 
-        frontLeft.setPower(fl);
-        frontRight.setPower(fr);
-        backLeft.setPower(bl);
-        backRight.setPower(br);
-    }
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
 
-    void rotateToAngle(double targetAngleDegrees) {
-        double targetAngle = Math.toRadians(targetAngleDegrees);
-        double Kp = 0.1;  // proportional control constant
-        double MIN_POWER = 0.05;
-        double MAX_POWER = 0.4;
-        double TOLERANCE = Math.toRadians(2); // within ±2°
+            //shooter pid
 
-        while (opModeIsActive()) {
-            double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-            double error = normalizeAngle(targetAngle - currentAngle);
+            shooter.setPID(pshoot, ishoot, dshoot);
 
-            // Break if close enough
-            if (Math.abs(error) < TOLERANCE) break;
 
-            // Proportional control
-            double power = 0.5;
 
-            // Clamp power
-//            power = Math.max(-MAX_POWER, Math.min(MAX_POWER, power));
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
 
-            // Apply minimum turning power
-            if (Math.abs(power) < MIN_POWER)
-                power = Math.signum(power) * MIN_POWER;
 
-            // Apply rotation (all wheels turn in opposite directions)
-            frontLeft.setPower(power);
-            backLeft.setPower(-power);
-            frontRight.setPower(power);
-            backRight.setPower(-power);
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
 
-            telemetry.addData("Target Angle", Math.toDegrees(targetAngle));
-            telemetry.addData("Current Angle", Math.toDegrees(currentAngle));
-            telemetry.addData("Error", Math.toDegrees(error));
-            telemetry.addData("Power", power);
-            telemetry.addLine("(┬┬﹏┬┬)");
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
             telemetry.update();
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
+
+            if(current > last){
+                break;
+
+            }
         }
 
-        // Stop all motors
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
+
+
+
+
+    }
+    void shoot(double last, boolean kickuptrue){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        sleep(500);
+        while(opModeIsActive()){
+            current = sec.seconds();
+
+            intake.setPower(1);
+
+
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
+
+            if(current >  last){
+                break;
+
+            }
+        }
+
+
+
     }
 }
