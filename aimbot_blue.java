@@ -50,13 +50,7 @@ public class aimbot_blue extends LinearOpMode {
 
     //--Intake--
     DcMotorEx intake;
-    CRServo roll_left;
-    CRServo roll_right;
 
-    CRServo up_left;
-    CRServo up_right;
-
-    Servo kickup;
     Servo holdfast;
 
     //@Override
@@ -94,13 +88,9 @@ public class aimbot_blue extends LinearOpMode {
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
 
-        roll_left = hardwareMap.get(CRServo.class, "inspin1");
-        roll_right = hardwareMap.get(CRServo.class, "inspin2");
 
-        up_left = hardwareMap.get(CRServo.class, "spinup1");
-        up_right = hardwareMap.get(CRServo.class, "spinup2");
 
-        kickup = hardwareMap.get(Servo.class, "kickup");
+
 
         holdfast = hardwareMap.get(Servo.class, "hold");
 
@@ -201,22 +191,7 @@ public class aimbot_blue extends LinearOpMode {
 
 
             }
-            if (spinny) {
-                roll_left.setPower(1);
-                roll_right.setPower(-1);
-                up_left.setPower(-1);
-                up_right.setPower(1);
-            } else {
-                roll_left.setPower(0);
-                roll_right.setPower(0);
-                up_left.setPower(0);
-                up_right.setPower(0);
-            }
-            if (kick) {
-                kickup.setPosition(0);
-            } else {
-                kickup.setPosition(1);
-            }
+
 
             if (inOn) {
                 intake.setPower(1);
@@ -287,7 +262,7 @@ public class aimbot_blue extends LinearOpMode {
 
                 telemetry.update();
 
-               //THUS IS WHERE TOD ELETE
+                //THUS IS WHERE TOD ELETE
                 //yes = false;
 
                 if(yes) {
@@ -326,11 +301,10 @@ public class aimbot_blue extends LinearOpMode {
 
 
             }else {
-        turret.setPower(0);
-        telemetry.addData("Limelight", "No Targets Found");
-        telemetry.update();
+                turret.setPower(0);
+                telemetry.addData("Limelight", "No Targets Found");
+                telemetry.update();
             }
         }
     }
 }
-
