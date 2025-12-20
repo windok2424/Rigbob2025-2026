@@ -1,0 +1,165 @@
+package org.firstinspires.ftc.teamcode;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+@Autonomous(name = "Scratch")
+public class Scratch extends LinearOpMode {
+
+    // Motors
+    DcMotor frontLeft, frontRight, backLeft, backRight;
+
+    // Pinpoint
+    GoBildaPinpointDriver pinpoint;
+
+    // Control constants
+    public PIDController xpos;
+    public PIDController ypos;
+    public PIDController thetapos;
+    public static double px = -0.05, ix = 0.1, dx = 0.001;
+    public static double targetx = 0;
+    public static double py = -0.05, iy = 0.1, dy = 0.001;
+    public static double targety = 0;
+    public static double ptheta = 0.05, itheta = 0, dtheta = 0;
+    public static double targettheta = 0;
+    final double MIN_TRANSLATION_POWER = 0.12;
+    final double MIN_ROTATION_POWER = 0.06;
+
+    final double POSITION_TOLERANCE_CM = 2.0;
+    final double ANGLE_TOLERANCE_RAD = Math.toRadians(2);
+
+    @Override
+    public void runOpMode() {
+        xpos = new PIDController(px, ix , dx);
+        ypos = new PIDController(py, iy , dy);
+        thetapos = new PIDController(ptheta, itheta , dtheta);
+
+        // Motor mapping
+        frontLeft  = hardwareMap.get(DcMotor.class, "FL");
+        frontRight = hardwareMap.get(DcMotor.class, "FR");
+        backLeft   = hardwareMap.get(DcMotor.class, "BL");
+        backRight  = hardwareMap.get(DcMotor.class, "BR");
+
+        // Motor directions (mecanum)
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // Pinpoint setup
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+        pinpoint.setEncoderResolution(
+                GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD
+        );
+
+        pinpoint.setOffsets(0, 0, DistanceUnit.MM);
+
+        pinpoint.setEncoderDirections(
+                GoBildaPinpointDriver.EncoderDirection.REVERSED,
+                GoBildaPinpointDriver.EncoderDirection.REVERSED
+        );
+
+        telemetry.addLine("Ready. Waiting for start.");
+        telemetry.update();
+
+        waitForStart();
+
+        // Calibrate IMU ONCE
+        pinpoint.resetPosAndIMU();
+        sleep(500);
+
+
+
+        while (opModeIsActive()) {
+            // Drive to (0, 20 cm) facing 0°
+            move(0, 20, 0);
+            sleep(250);
+            move(-20, 20, 0);
+            sleep(250);
+            move(-20,0,0);
+            sleep(250);
+            move(0,0,0);
+            // Stop completely
+            setMecanumPowers(0, 0, 0);
+            sleep(50);
+        }
+    }
+    void move(double x, double y, double angle) {
+        while (opModeIsActive()) {
+            pinpoint.update();
+            targetx = x;
+            targety = y;
+            targettheta = angle;
+            xpos.setPID(px, ix, dx);
+            ypos.setPID(py, iy, dx);
+            thetapos.setPID(ptheta, itheta, dtheta);
+            double currentx = pinpoint.getPosX(DistanceUnit.CM);
+            double currenty = -pinpoint.getPosY(DistanceUnit.CM);
+            double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
+            double errorX = targetx - currentx;
+            double errorY = targety - currenty;
+            double errortheta = targettheta - currenttheta;
+
+
+            telemetry.addData("x :", currentx);
+            telemetry.addData("target x: ", targetx);
+            telemetry.addData("y :", currenty);
+            telemetry.addData("target y: ", targety);
+            telemetry.addData("theta :", currenttheta);
+            telemetry.addData("target theta: ", targettheta);
+            telemetry.update();
+
+            double pidx = xpos.calculate(currentx, targetx);
+            double pidy = ypos.calculate(currenty, targety);
+            double pidtheta = thetapos.calculate(currenttheta, targettheta);
+            setMecanumPowers(pidx, pidy, pidtheta);
+
+            telemetry.addData("Target", "(%.1f, %.1f)", targetx, targety);
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)",
+                    currentx, currenty, currenttheta);
+            telemetry.update();
+
+            if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errorY) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
+                break;
+            }
+        }
+
+    }
+    void setMecanumPowers(double strafe, double forward, double rotate) {
+
+        double fl = forward + strafe + rotate;
+        double fr = -forward +strafe - rotate;
+        double bl = -forward + strafe + rotate;
+        double br = forward + strafe - rotate;
+
+        double max = Math.max(1.0,
+                Math.max(Math.abs(fl),
+                        Math.max(Math.abs(fr),
+                                Math.max(Math.abs(bl), Math.abs(br)))));
+
+        frontLeft.setPower(fl / max);
+        frontRight.setPower(fr / max);
+        backLeft.setPower(bl / max);
+        backRight.setPower(br / max);
+    }
+
+    double normalizeAngle(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+}
