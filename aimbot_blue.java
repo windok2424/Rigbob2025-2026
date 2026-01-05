@@ -258,14 +258,17 @@ public class aimbot_blue extends LinearOpMode {
             //Once again this is by ChatGPT so take it with a grain of salt.
             //A Poem. By Andy.
             distance = distance/100;
-            double pos_angle = 70;
+            telemetry.addData("Distance in CM", distance);
+            double pos_angle = 76*2*Math.PI/360;
             double factor = 1;
-            double chat = (60/(2*3.14*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
+            double chat = (60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
+
+            telemetry.addData("This is the supposed RPM it should be shooting", chat);
             //--------------------------
 
             //MAKE SURE YOU UNCOMMENT THIS
-            //spin1.setPower(-powershot);
-            //spin2.setPower(powershot);
+            spin1.setPower(-powershot);
+            spin2.setPower(powershot);
             LLResult result = limelight.getLatestResult();
 
             if (result != null && result.isValid()) {
