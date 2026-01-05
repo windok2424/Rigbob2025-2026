@@ -259,7 +259,7 @@ public class aimbot_blue extends LinearOpMode {
             //A Poem. By Andy.
             distance = distance/100;
             telemetry.addData("Distance in CM", distance);
-            double pos_angle = 76*2*Math.PI/360;
+            double pos_angle = 78*2*Math.PI/360;
             double factor = 1;
             double chat = (60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
 
