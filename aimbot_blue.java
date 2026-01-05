@@ -164,7 +164,7 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("thisis pidshot", pidshot);
 
 
-            telemetry.update();
+            //telemetry.update();
 
 
             //gamepad 1
@@ -194,6 +194,11 @@ public class aimbot_blue extends LinearOpMode {
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
+            telemetry.addData("PowerFL", powerFL);
+            telemetry.addData("PowerBL", powerBL);
+            telemetry.addData("PowerFR", powerFR);
+            telemetry.addData("PowerBR", powerBR);
+
             if(holdit){
                 blocker.setPosition(0);
                 intake.setPower(1);
@@ -206,8 +211,10 @@ public class aimbot_blue extends LinearOpMode {
 
             if (far) {
                 shottarget = -2200;
+                telemetry.addData("Far Works", shottarget);
             }
             if (close) {
+                telemetry.addData("Close Works", shottarget);
                 shottarget = -1900;
 
             }
@@ -222,7 +229,7 @@ public class aimbot_blue extends LinearOpMode {
 
             }
             telemetry.addData("Restarted", powerBL);
-            telemetry.update();
+            //telemetry.update();
 
             if (slowmode) {
                 FL.setPower(powerFL * 0.3);
@@ -239,9 +246,26 @@ public class aimbot_blue extends LinearOpMode {
 
 
             }
+            telemetry.addData("This is powershot", powershot);
 
-            spin1.setPower(1);
-            spin2.setPower(1);
+            //Subject to Change---------
+
+            //Alright so basically
+            //This is ripped from ChatGPT
+            //Implemented
+            //It should output an rpm based on distance from the goal in meters. Assuming distance is currently centimeters
+            //pos_angle is the assumed angle the ball is launched from. I measured it poorly. We can always change it.
+            //Once again this is by ChatGPT so take it with a grain of salt.
+            //A Poem. By Andy.
+            distance = distance/100;
+            double pos_angle = 70;
+            double factor = 1;
+            double chat = (60/(2*3.14*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
+            //--------------------------
+
+            //MAKE SURE YOU UNCOMMENT THIS
+            //spin1.setPower(-powershot);
+            //spin2.setPower(powershot);
             LLResult result = limelight.getLatestResult();
 
             if (result != null && result.isValid()) {
@@ -253,7 +277,7 @@ public class aimbot_blue extends LinearOpMode {
                     int id = fiducial.getFiducialId(); // The ID number of the fiducial
                     yes = id == 20;
                     telemetry.addData("Yes", yes);
-                    telemetry.update();
+                    //telemetry.update();
                 }
 
                 //int id = fiducial.getId(); // The ID number of the fiducial... I hope. nay. I pray.
@@ -267,7 +291,7 @@ public class aimbot_blue extends LinearOpMode {
 
                 telemetry.addData("Target Area", ta);
 
-                telemetry.update();
+                //telemetry.update();
 
                 //THUS IS WHERE TOD ELETE
                 //yes = false;
@@ -284,13 +308,13 @@ public class aimbot_blue extends LinearOpMode {
                     boolean manualstop = gamepad1.right_bumper;
 
 
-                    turret.setPower(turretpower);
+                    turret.setPower(-turretpower);
 
 
                 } else{
                     tx = 0;
                     double turretpower = turret_pidcontroller.calculate(tx, turrettarget);
-                    turret.setPower(turretpower);
+                    turret.setPower(-turretpower);
                 }
 
                 //int id = fiducial.getFiducialId(); // The ID    c cx cx of the fiducial
@@ -310,8 +334,9 @@ public class aimbot_blue extends LinearOpMode {
             }else {
                 turret.setPower(0);
                 telemetry.addData("Limelight", "No Targets Found");
-                telemetry.update();
+                //telemetry.update();
             }
+            telemetry.update();
         }
     }
 
