@@ -210,7 +210,7 @@ public class aimbot_blue extends LinearOpMode {
             }
 
             if (far) {
-                shottarget = -2200;
+                shottarget = -2500;
                 telemetry.addData("Far Works", shottarget);
             }
             if (close) {
