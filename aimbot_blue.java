@@ -170,7 +170,7 @@ public class aimbot_blue extends LinearOpMode {
             //gamepad 1
             double y = gamepad1.left_stick_y;
             double x = -gamepad1.left_stick_x;
-            double rx = gamepad1.right_trigger - gamepad1.left_trigger;
+            double rx = -gamepad1.right_trigger + gamepad1.left_trigger;
             //double insanity = gamepad1.right_trigger;
 
             boolean yes = false;
@@ -210,7 +210,7 @@ public class aimbot_blue extends LinearOpMode {
             }
 
             if (far) {
-                shottarget = -2500;
+                shottarget = -2425;
                 telemetry.addData("Far Works", shottarget);
             }
             if (close) {
@@ -261,7 +261,7 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("Distance in CM", distance);
             double pos_angle = 78*2*Math.PI/360;
             double factor = 1;
-            double chat = (60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
+            double chat = -(60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
 
             telemetry.addData("This is the supposed RPM it should be shooting", chat);
             //--------------------------
