@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -32,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 class Pose2d {
     double x, y, theta;
@@ -53,6 +55,8 @@ public class aimbot_blue extends LinearOpMode {
     DcMotorEx spin2;
     Servo blocker;
     IMU imu;
+
+
 
     DcMotorEx turret; //turntable motor
     //DcMotorEx spin; //flywheel
@@ -96,6 +100,11 @@ public class aimbot_blue extends LinearOpMode {
         imu.initialize(imuParams);
         imu.resetYaw();
 
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpoint.setOffsets(0, 0, DistanceUnit.MM);
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         FL = hardwareMap.get(DcMotorEx.class, "FL");
         BL = hardwareMap.get(DcMotorEx.class, "BL");
@@ -189,8 +198,8 @@ public class aimbot_blue extends LinearOpMode {
             boolean runandkickup = gamepad2.y;
             boolean slowmode = gamepad2.right_bumper;
 
-            double powerFL = (-y - x + rx);
-            double powerBL = (y - x - rx);
+            double powerFL = (-y + x + rx);
+            double powerBL = (y + x - rx);
             double powerFR = (y - x + rx);
             double powerBR = (-y - x - rx);
 
@@ -344,8 +353,9 @@ public class aimbot_blue extends LinearOpMode {
     }
 
     Pose2d getRobotPose () {
-        double xWheel = BL.getCurrentPosition() * TICKS_TO_CM;
-        double yWheel = -FL.getCurrentPosition() * TICKS_TO_CM;
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        double xWheel = -pinpoint.getPosX(DistanceUnit.CM);
+        double yWheel = -pinpoint.getPosY(DistanceUnit.CM);
 
         double deltaXWheel = xWheel - lastXWheel;
         double deltaYWheel = yWheel - lastYWheel;
@@ -353,7 +363,8 @@ public class aimbot_blue extends LinearOpMode {
         lastXWheel = xWheel;
         lastYWheel = yWheel;
 
-        theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+//       theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        theta = pinpoint.getHeading(AngleUnit.DEGREES);
 
         double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
         double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
@@ -361,6 +372,6 @@ public class aimbot_blue extends LinearOpMode {
         x += deltaX;
         y += deltaY;
 
-        return new Pose2d(x, y, theta);
+        return new Pose2d(x, y,theta);
     }
 }
