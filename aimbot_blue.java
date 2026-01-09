@@ -162,10 +162,10 @@ public class aimbot_blue extends LinearOpMode {
             Pose2d pose = getRobotPose();
             pinpoint.getPosition();
 
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosX(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + ((int) pinpoint.getPosX(DistanceUnit.CM)), 2));
+            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pose.y), 2) + Math.pow(365.76 + 20.066 + (pose.x), 2));
             telemetry.addData("Distance:", distance);
-            telemetry.addData("x distance", (int) pinpoint.getPosX(DistanceUnit.CM));
-            telemetry.addData("y distance", (int) pinpoint.getPosY(DistanceUnit.CM));
+            telemetry.addData("x distance", pose.x);
+            telemetry.addData("y distance", pose.y);
             omega = omega;
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
