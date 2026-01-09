@@ -160,10 +160,12 @@ public class aimbot_blue extends LinearOpMode {
 
             double pidshot = shooter.calculate(omega, shottarget);
             Pose2d pose = getRobotPose();
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pose.y), 2) + Math.pow(365.76 + 20.066 + (pose.x), 2));
+            pinpoint.getPosition();
+
+            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosX(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + ((int) pinpoint.getPosX(DistanceUnit.CM)), 2));
             telemetry.addData("Distance:", distance);
-            telemetry.addData("x distance", pose.x);
-            telemetry.addData("y distance", pose.y);
+            telemetry.addData("x distance", (int) pinpoint.getPosX(DistanceUnit.CM));
+            telemetry.addData("y distance", (int) pinpoint.getPosY(DistanceUnit.CM));
             omega = omega;
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
@@ -185,13 +187,14 @@ public class aimbot_blue extends LinearOpMode {
             boolean yes = false;
 
 
-            boolean slowMode = gamepad1.left_bumper;
-            boolean manual_aim = gamepad2.right_bumper;
+            //boolean slowMode = gamepad1.left_bumper;
+            boolean manual_aim = gamepad2.left_bumper;
             double manual_power = gamepad2.right_stick_x;
 
             boolean inOn = gamepad1.a;
             boolean kick = gamepad2.left_bumper;
             boolean spinny = gamepad2.x;
+            boolean spinnyrev = gamepad1.dpad_left;
             boolean close = gamepad2.dpad_down;
             boolean far = gamepad2.dpad_up;
             boolean holdit = gamepad1.b;
@@ -210,7 +213,7 @@ public class aimbot_blue extends LinearOpMode {
 
             if(holdit){
                 blocker.setPosition(0);
-                intake.setPower(1);
+                intake.setPower(0.8);
 
             }
             else{
@@ -232,6 +235,8 @@ public class aimbot_blue extends LinearOpMode {
                 intake.setPower(1);
 
 
+            } else if(spinnyrev){
+                intake.setPower(-1);
             } else if(!holdit) {
                 intake.setPower(0);
 
@@ -280,7 +285,7 @@ public class aimbot_blue extends LinearOpMode {
             spin2.setPower(powershot);
             LLResult result = limelight.getLatestResult();
 
-            if (result != null && result.isValid()) {
+            if (result != null && result.isValid() && !manual_aim) {
 
 
                 List<FiducialResult> fiducials = result.getFiducialResults();
@@ -308,7 +313,7 @@ public class aimbot_blue extends LinearOpMode {
                 //THUS IS WHERE TOD ELETE
                 //yes = false;
 
-                if(yes) {
+                if (yes) {
                     tx = result.getTx(); // How far left or right the target is (degrees)
                     ty = result.getTy(); // How far up or down the target is (degrees)
                     ta = result.getTa(); // How big the target looks (0%-100% of the image)
@@ -323,7 +328,7 @@ public class aimbot_blue extends LinearOpMode {
                     turret.setPower(-turretpower);
 
 
-                } else{
+                } else {
                     tx = 0;
                     double turretpower = turret_pidcontroller.calculate(tx, turrettarget);
                     turret.setPower(-turretpower);
@@ -333,14 +338,9 @@ public class aimbot_blue extends LinearOpMode {
 
                 //telemetry.addData("Fiducial: ", id);
 
-                if (manual_aim) {
-//        turret.setPower(-manual_power);
-//        telemetry.addData("Limelight", "Manual Aim");
-//        telemetry.update();
-//        } else {
-//            turret.setPower(0);
-//        }
-                }
+            }else if (manual_aim) {
+            turret.setPower(manual_power);
+            telemetry.addData("Limelight", "Manual Aim");
 
 
             }else {
