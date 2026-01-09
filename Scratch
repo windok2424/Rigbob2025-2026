@@ -1,0 +1,544 @@
+package org.firstinspires.ftc.teamcode;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.hardware.limelightvision.LLFieldMap;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.*;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import java.util.List;
+import com.acmerobotics.*;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.*;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+@Autonomous(name = "Scratch")
+public class Scratch extends LinearOpMode {
+
+    // Motors
+    DcMotor frontLeft, frontRight, backLeft, backRight;
+    DcMotorEx spin1;
+    DcMotorEx spin2;
+    //--Intake--
+    DcMotor intake;
+    DcMotor turret;
+
+    Servo hold;
+
+    // Pinpoint
+    GoBildaPinpointDriver pinpoint;
+
+    // Control constants
+    public PIDController xpos;
+    public PIDController ypos;
+    public PIDController thetapos;
+    public static double px = -0.03, ix = 0.1, dx = 0.002;
+    public static double targetx = 0;
+    public static double py = -0.03, iy = 0.1, dy = 0.002;
+    public static double targety = 0;
+    public static double ptheta = 0.05, itheta = 0, dtheta = 0;
+    public static double targettheta = 0;
+    public PIDController shooter;
+    private PIDController turret_pidcontroller;
+    public static double pturret = 0.05, iturret = 0, dturret = 0.0005;
+
+    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    private double shottarget = -2340;
+    final double MIN_TRANSLATION_POWER = 0.12;
+    final double MIN_ROTATION_POWER = 0.06;
+
+    final double POSITION_TOLERANCE_CM = 2.0;
+    final double ANGLE_TOLERANCE_RAD = Math.toRadians(2);
+
+
+    @Override
+    public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        shooter = new PIDController(pshoot,ishoot,dshoot);
+        xpos = new PIDController(px, ix , dx);
+        ypos = new PIDController(py, iy , dy);
+        thetapos = new PIDController(ptheta, itheta , dtheta);
+
+
+        // Motor mapping
+        frontLeft  = hardwareMap.get(DcMotor.class, "FL");
+        frontRight = hardwareMap.get(DcMotor.class, "FR");
+        backLeft   = hardwareMap.get(DcMotor.class, "BL");
+        backRight  = hardwareMap.get(DcMotor.class, "BR");
+        intake     = hardwareMap.get(DcMotor.class, "intake");
+        spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
+        spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
+
+        turret = hardwareMap.get(DcMotor.class, "turret");
+        hold = hardwareMap.get(Servo.class, "hold");
+
+        // Motor directions (mecanum)
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.FORWARD);
+
+        // Pinpoint setup
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+        pinpoint.setEncoderResolution(
+                GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD
+        );
+
+        pinpoint.setOffsets(0, 0, DistanceUnit.MM);
+
+        pinpoint.setEncoderDirections(
+                GoBildaPinpointDriver.EncoderDirection.REVERSED,
+                GoBildaPinpointDriver.EncoderDirection.REVERSED
+        );
+
+        telemetry.addLine("Ready. Waiting for start.");
+        telemetry.update();
+
+        waitForStart();
+
+        // Calibrate IMU ONCE
+        pinpoint.resetPosAndIMU();
+        sleep(300);
+
+
+
+        while (opModeIsActive()) {
+            shoot(10,-2445, 3);
+            // Drive to (0, 20 cm) facing 0°
+            movebutnostop(0,165,0,2.5, false);
+            hold.setPosition(1);
+            sleep(300);
+
+            fastshoot(2.5,40);
+
+            sleep(200);
+            hold.setPosition(0);
+            fastshoot(1,40);
+            sleep(200);
+            hold.setPosition(1);
+            //drive to intake
+;
+            move(20, 125, 0,1.5, false);
+            move(100,125,0,2, false);
+
+            //clearing BUT ADD THIS AFTER
+//            movebutnostop(70,125,0,1, false);
+//
+//            //clear the track
+//
+//
+//            movebutnostop(70, 155, 0, 1, false);
+//
+//            movebutnostop(100, 155, 0, 1, false);
+
+
+
+
+            //shoot set 2 of balls
+            movebutnostop(-0,165,0,4, false);
+
+            sleep(300);
+            hold.setPosition(0);
+            fastshoot(1.5,40);
+
+            sleep(300);
+            hold.setPosition(1);
+
+            //technicly set 1 of ball but who cares
+
+            move(20,70,0,2,true);
+            move(100,70,0,1,true);
+            movebutnostop(0,165,0,3, false);
+            sleep(300);
+            hold.setPosition(0);
+            fastshoot(1.5,40);
+
+
+
+            //get to 3rd set of balls
+            move(20, 190,0,2,true);
+            move(70,190,0,1,true);
+            movebutnostop(0,155,0,2.5, false);
+            sleep(300);
+            fastshoot(1.5,40);
+
+            // Stop completely
+            setMecanumPowers(0, 0, 0);
+            sleep(50);
+        }
+    }
+    void move(double x, double y, double angle, double last, boolean runintake) {
+        ElapsedTime sec = new ElapsedTime();
+
+
+        sec.reset();
+        intake     = hardwareMap.get(DcMotor.class, "intake");
+
+        double current = sec.seconds();
+        while (opModeIsActive()) {
+            if(runintake = true){
+                intake.setPower(1);
+            }else{
+                intake.setPower(0);
+            }
+
+            current = sec.seconds();
+
+
+            pinpoint.update();
+            targetx = x;
+            targety = y;
+            targettheta = angle;
+            xpos.setPID(px, ix, dx);
+            ypos.setPID(py, iy, dx);
+            thetapos.setPID(ptheta, itheta, dtheta);
+            double currentx = pinpoint.getPosX(DistanceUnit.CM);
+            double currenty = -pinpoint.getPosY(DistanceUnit.CM);
+            double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
+            double errorX = targetx - currentx;
+            double errorY = targety - currenty;
+            double errortheta = targettheta - currenttheta;
+
+
+            telemetry.addData("x :", currentx);
+            telemetry.addData("target x: ", targetx);
+            telemetry.addData("y :", currenty);
+            telemetry.addData("target y: ", targety);
+            telemetry.addData("theta :", currenttheta);
+            telemetry.addData("target theta: ", targettheta);
+            telemetry.update();
+
+            double pidx = xpos.calculate(currentx, targetx);
+            double pidy = ypos.calculate(currenty, targety);
+            double pidtheta = thetapos.calculate(currenttheta, targettheta);
+            setMecanumPowers(pidx, pidy, pidtheta);
+
+            telemetry.addData("Target", "(%.1f, %.1f)", targetx, targety);
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", currentx, currenty, currenttheta);
+            telemetry.update();
+
+            if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errorY) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
+                break;
+            }
+            if (current > last) {
+                break;
+
+            }
+        }
+
+    }
+
+
+    void movebutnostop(double x, double y, double angle, double last, boolean runintake) {
+        ElapsedTime sec = new ElapsedTime();
+
+
+        sec.reset();
+        intake     = hardwareMap.get(DcMotor.class, "intake");
+
+        double current = sec.seconds();
+        while (opModeIsActive()) {
+            if(runintake = true){
+                intake.setPower(1);
+            }else{
+                intake.setPower(0);
+            }
+
+            current = sec.seconds();
+
+
+            pinpoint.update();
+            targetx = x;
+            targety = y;
+            targettheta = angle;
+            xpos.setPID(px, ix, dx);
+            ypos.setPID(py, iy, dx);
+            thetapos.setPID(ptheta, itheta, dtheta);
+            double currentx = pinpoint.getPosX(DistanceUnit.CM);
+            double currenty = -pinpoint.getPosY(DistanceUnit.CM);
+            double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
+            double errorX = targetx - currentx;
+            double errorY = targety - currenty;
+            double errortheta = targettheta - currenttheta;
+
+
+            telemetry.addData("x :", currentx);
+            telemetry.addData("target x: ", targetx);
+            telemetry.addData("y :", currenty);
+            telemetry.addData("target y: ", targety);
+            telemetry.addData("theta :", currenttheta);
+            telemetry.addData("target theta: ", targettheta);
+            telemetry.update();
+
+            double pidx = xpos.calculate(currentx, targetx);
+            double pidy = ypos.calculate(currenty, targety);
+            double pidtheta = thetapos.calculate(currenttheta, targettheta);
+            setMecanumPowers(pidx, pidy, pidtheta);
+
+            telemetry.addData("Target", "(%.1f, %.1f)", targetx, targety);
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", currentx, currenty, currenttheta);
+            telemetry.update();
+
+            if (current > last) {
+                break;
+
+            }
+        }
+
+    }
+    void setMecanumPowers(double strafe, double forward, double rotate) {
+
+        double fl = forward + strafe + rotate;
+        double fr = -forward +strafe - rotate;
+        double bl = -forward + strafe + rotate;
+        double br = forward + strafe - rotate;
+
+        double max = Math.max(1.0,
+                Math.max(Math.abs(fl),
+                        Math.max(Math.abs(fr),
+                                Math.max(Math.abs(bl), Math.abs(br)))));
+
+        frontLeft.setPower(fl / max);
+        frontRight.setPower(fr / max);
+        backLeft.setPower(bl / max);
+        backRight.setPower(br / max);
+    }
+
+    double normalizeAngle(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+    void kickupball(double last){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
+
+            if(current == last){
+
+                break;
+
+            }
+        }
+
+
+
+
+
+    }
+    void justrpm(double last){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        while(opModeIsActive()){
+            current = sec.seconds();
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(powershot);
+            spin2.setPower(powershot);
+
+            if(current > last){
+                break;
+
+            }
+        }
+
+
+
+
+
+    }
+    void shoot(double last, double rpm, double target){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        shottarget = rpm;
+
+
+        ElapsedTime clockfortpr = new ElapsedTime();
+
+
+
+        sec.reset();
+        double tprinsec = clockfortpr.seconds();
+
+        while(opModeIsActive()){
+
+
+
+
+
+            current = sec.seconds();
+            tprinsec = clockfortpr.seconds();
+
+            if(2< tprinsec && tprinsec < 2.3){
+                intake.setPower(1);
+
+            }
+            else if(3 < tprinsec && tprinsec < 3.3){
+
+                intake.setPower(1);
+            }
+            else if(4 < tprinsec && tprinsec < 4.3){
+                intake.setPower(1);
+            }
+            else{
+                intake.setPower(0);
+            }
+
+
+
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+
+            double powershot = pidshot;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(-powershot);
+            spin2.setPower(powershot);
+
+            if(current >  last){
+                break;
+
+            }
+        }
+
+
+
+    }
+
+    void fastshoot(double last, double rpm){
+        ElapsedTime sec = new ElapsedTime();
+
+
+
+        sec.reset();
+        double current = sec.seconds();
+        shottarget = 3;
+
+
+        ElapsedTime clockfortpr = new ElapsedTime();
+
+
+
+        sec.reset();
+        double tprinsec = clockfortpr.seconds();
+
+        while(opModeIsActive()){
+            current = sec.seconds();
+            tprinsec = clockfortpr.seconds();
+
+
+            intake.setPower(1);
+
+
+            //shooter pid
+
+            shooter.setPID(pshoot, ishoot, dshoot);
+
+
+
+            double omega = spin1.getVelocity();
+            telemetry.addData("this is the omega", omega);
+
+
+            double pidshot = shooter.calculate(omega, shottarget);
+            omega = omega;
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+
+
+            telemetry.update();
+
+            spin1.setPower(0.85);
+            spin2.setPower(0.85);
+
+            if(current >  last){
+                break;
+
+            }
+        }
+
+
+
+    }
+}
