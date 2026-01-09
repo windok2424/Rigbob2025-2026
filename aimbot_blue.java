@@ -32,6 +32,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -162,11 +163,11 @@ public class aimbot_blue extends LinearOpMode {
             double pidshot = shooter.calculate(omega, shottarget);
             Pose2d pose = getRobotPose();
             //pinpoint.getPosition();
-
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pose.y), 2) + Math.pow(365.76 + 20.066 + (pose.x), 2));
+            pinpoint.update();
+            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosY(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + (pinpoint.getPosX(DistanceUnit.CM)), 2));
             telemetry.addData("Distance:", distance);
-            telemetry.addData("x distance", pose.x);
-            telemetry.addData("y distance", pose.y);
+            telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
+            telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
             omega = omega;
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
