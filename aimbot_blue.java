@@ -160,7 +160,7 @@ public class aimbot_blue extends LinearOpMode {
 
             double pidshot = shooter.calculate(omega, shottarget);
             Pose2d pose = getRobotPose();
-            pinpoint.getPosition();
+            //pinpoint.getPosition();
 
             double distance = Math.sqrt(Math.pow(365.76 / 2 - (pose.y), 2) + Math.pow(365.76 + 20.066 + (pose.x), 2));
             telemetry.addData("Distance:", distance);
@@ -339,8 +339,8 @@ public class aimbot_blue extends LinearOpMode {
                 //telemetry.addData("Fiducial: ", id);
 
             }else if (manual_aim) {
-            turret.setPower(manual_power);
-            telemetry.addData("Limelight", "Manual Aim");
+                turret.setPower(manual_power);
+                telemetry.addData("Limelight", "Manual Aim");
 
 
             }else {
@@ -354,6 +354,7 @@ public class aimbot_blue extends LinearOpMode {
 
     Pose2d getRobotPose () {
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.update();
         double xWheel = -pinpoint.getPosX(DistanceUnit.CM);
         double yWheel = -pinpoint.getPosY(DistanceUnit.CM);
 
