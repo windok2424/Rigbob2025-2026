@@ -104,8 +104,9 @@ public class aimbot_blue extends LinearOpMode {
 
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setOffsets(0, 0, DistanceUnit.MM);
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
-
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpoint.resetPosAndIMU();
+        pinpoint.recalibrateIMU();
         FL = hardwareMap.get(DcMotorEx.class, "FL");
         BL = hardwareMap.get(DcMotorEx.class, "BL");
         FR = hardwareMap.get(DcMotorEx.class, "FR");
