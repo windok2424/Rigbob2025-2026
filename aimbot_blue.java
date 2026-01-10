@@ -159,21 +159,13 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("this is the omega", omega);
 
 
-            double pidshot = shooter.calculate(omega, shottarget);
+
             Pose2d pose = getRobotPose();
             //pinpoint.getPosition();
             pinpoint.update();
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosY(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + (pinpoint.getPosX(DistanceUnit.CM)), 2));
-            telemetry.addData("Distance:", distance);
-            telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
-            telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
+
             omega = omega;
 
-            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
-
-            double powershot = pidshot + ff;
-
-            telemetry.addData("thisis pidshot", pidshot);
 
 
             //telemetry.update();
@@ -202,6 +194,9 @@ public class aimbot_blue extends LinearOpMode {
             boolean runandkickup = gamepad2.y;
             boolean slowmode = gamepad2.right_bumper;
 
+            boolean auto_distance = gamepad2.y;
+            boolean manual_distance = gamepad2.a;
+
             double powerFL = (-y + x + rx);
             double powerBL = (y + x - rx);
             double powerFR = (y - x + rx);
@@ -212,15 +207,16 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("PowerFR", powerFR);
             telemetry.addData("PowerBR", powerBR);
 
-            if(holdit){
-                blocker.setPosition(0);
-                intake.setPower(0.8);
+            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosY(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + (pinpoint.getPosX(DistanceUnit.CM)), 2));
+            telemetry.addData("Distance:", distance);
+            telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
+            telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
+            distance = distance/100;
+            telemetry.addData("Distance in CM", distance);
+            double pos_angle = 78*2*Math.PI/360;
+            double factor = 1;
+            double chat = -(60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
 
-            }
-            else{
-
-                blocker.setPosition(1);
-            }
 
             if (far) {
                 shottarget = -2425;
@@ -231,6 +227,33 @@ public class aimbot_blue extends LinearOpMode {
                 shottarget = -1900;
 
             }
+
+            double pidshot = shooter.calculate(omega, -1900);
+//            if(auto_distance){
+//                //Test Later
+//                pidshot = shooter.calculate(omega, chat+250);
+//            } else if (manual_distance){
+//                pidshot = shooter.calculate(omega, shottarget);
+//            }
+
+            pidshot = shooter.calculate(omega, shottarget);
+
+            double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+
+            double powershot = pidshot + ff;
+
+            telemetry.addData("thisis pidshot", pidshot);
+            if(holdit){
+                blocker.setPosition(0);
+                intake.setPower(0.8);
+
+            }
+            else{
+
+                blocker.setPosition(1);
+            }
+
+
 
             if (inOn) {
                 intake.setPower(1);
@@ -272,11 +295,6 @@ public class aimbot_blue extends LinearOpMode {
             //pos_angle is the assumed angle the ball is launched from. I measured it poorly. We can always change it.
             //Once again this is by ChatGPT so take it with a grain of salt.
             //A Poem. By Andy.
-            distance = distance/100;
-            telemetry.addData("Distance in CM", distance);
-            double pos_angle = 78*2*Math.PI/360;
-            double factor = 1;
-            double chat = -(60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
 
             telemetry.addData("This is the supposed RPM it should be shooting", chat);
             //--------------------------
