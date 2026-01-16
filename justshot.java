@@ -19,12 +19,14 @@ public class justshot extends OpMode {
     private PIDController controller;
     public static double p = 0, i = 0, d = 0;
     public static double f = 0;
+    public static boolean intake = false;
 
     public static int target = 0;
 
     private final double ticks_in_rev = 537.6 ;
     private DcMotorEx shootup;
     private DcMotorEx shootdown;
+    private DcMotorEx intakemotor;
     @Override
     public void init(){
         controller = new PIDController(p, i , d);
@@ -32,20 +34,29 @@ public class justshot extends OpMode {
 
         shootup = hardwareMap.get(DcMotorEx.class, "shootup");
         shootdown = hardwareMap.get(DcMotorEx.class, "shootdown");
-
+        intakemotor = hardwareMap.get(DcMotorEx.class, "intake");
     }
     public void loop(){
         controller.setPID(p, i ,d);
         double omega = shootup.getVelocity();
 
-        double pid = controller.calculate(omega, target);
+        double pidshot = controller.calculate(omega, target);
         omega = omega;
         double ff = Math.cos(Math.toRadians(target)) * f;
 
-        double power = pid + ff;
+        double powershot = pidshot + ff;
 
-        shootup.setPower(power);
-        shootdown.setPower(power);
+        shootup.setPower(powershot);
+        shootdown.setPower(-powershot);
+
+        if(intake){
+            intakemotor.setPower(1);
+
+        }
+        else{
+
+            intakemotor.setPower(0);
+        }
 
         telemetry.addData("omega :", omega);
         telemetry.addData("target: ", target);
