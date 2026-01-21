@@ -172,7 +172,7 @@ public class aimbot_blue extends LinearOpMode {
 
 
             //gamepad 1
-            double y = gamepad1.left_stick_y;
+            double y = -gamepad1.left_stick_y;
             double x = -gamepad1.left_stick_x;
             double rx = -gamepad1.right_trigger + gamepad1.left_trigger;
             //double insanity = gamepad1.right_trigger;
@@ -207,7 +207,7 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("PowerFR", powerFR);
             telemetry.addData("PowerBR", powerBR);
 
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosY(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + (pinpoint.getPosX(DistanceUnit.CM)), 2));
+            double distance = Math.sqrt(Math.pow(365.76-pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
             telemetry.addData("Distance:", distance);
             telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
             telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
@@ -219,7 +219,7 @@ public class aimbot_blue extends LinearOpMode {
 
 
             if (far) {
-                shottarget = -2500;
+                shottarget = -2300;
                 telemetry.addData("Far Works", shottarget);
             }
             if (close) {
