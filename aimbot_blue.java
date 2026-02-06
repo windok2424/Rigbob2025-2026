@@ -227,7 +227,7 @@ public class aimbot_blue extends LinearOpMode {
 //
 //            }
 
-            double pidshot = shooter.calculate(omega, -1900);
+            //double pidshot = shooter.calculate(omega, -1900);
 //            if(auto_distance){
 //                //Test Later
 //                pidshot = shooter.calculate(omega, chat+250);
