@@ -72,13 +72,13 @@ public class aimbot_blue extends LinearOpMode {
 
     private PIDController turret_pidcontroller;
     private PIDController shooter;
-    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    public static double pshoot = 0.2, ishoot = 0.02, dshoot = 0;
     public static double fshoot = 0;
 
 
     public static double pturret = 0.05, iturret = 0, dturret = 0.0005;
     public static double fturret = 0;
-    public static double shottarget = -2300;
+    public static double shottarget = 2300;
     public static double turrettarget = 400;
 
 
@@ -172,7 +172,7 @@ public class aimbot_blue extends LinearOpMode {
 
 
             //gamepad 1
-            double y = gamepad1.left_stick_y;
+            double y = -gamepad1.left_stick_y;
             double x = -gamepad1.left_stick_x;
             double rx = -gamepad1.right_trigger + gamepad1.left_trigger;
             //double insanity = gamepad1.right_trigger;
@@ -207,26 +207,25 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("PowerFR", powerFR);
             telemetry.addData("PowerBR", powerBR);
 
-            double distance = Math.sqrt(Math.pow(365.76 / 2 - (pinpoint.getPosY(DistanceUnit.CM)), 2) + Math.pow(365.76 + 20.066 + (pinpoint.getPosX(DistanceUnit.CM)), 2));
+            double distance = Math.sqrt(Math.pow(365.76-pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
             telemetry.addData("Distance:", distance);
             telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
             telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
-            distance = distance/100;
             telemetry.addData("Distance in CM", distance);
             double pos_angle = 78*2*Math.PI/360;
             double factor = 1;
-            double chat = -(60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
+            //double chat = -(60/(2*Math.PI*0.04132*factor))*Math.sqrt((9.81*Math.pow(distance, 2))/(2*Math.pow(Math.cos(pos_angle), 2)*(distance*Math.tan(pos_angle)-0.1207)));
 
 
-            if (far) {
-                shottarget = -2425;
-                telemetry.addData("Far Works", shottarget);
-            }
-            if (close) {
-                telemetry.addData("Close Works", shottarget);
-                shottarget = -1900;
-
-            }
+//            if (far) {
+//                shottarget = -2300;
+//                telemetry.addData("Far Works", shottarget);
+//            }
+//            if (close) {
+//                telemetry.addData("Close Works", shottarget);
+//                shottarget = -1900;
+//
+//            }
 
             double pidshot = shooter.calculate(omega, -1900);
 //            if(auto_distance){
@@ -236,13 +235,21 @@ public class aimbot_blue extends LinearOpMode {
 //                pidshot = shooter.calculate(omega, shottarget);
 //            }
 
+            shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
+
+            telemetry.addData("this is shot target", shottarget);
+            //telemetry.update();
+
+
             pidshot = shooter.calculate(omega, shottarget);
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
 
             double powershot = pidshot + ff;
 
-            telemetry.addData("thisis pidshot", pidshot);
+
+
+
             if(holdit){
                 blocker.setPosition(0);
                 intake.setPower(0.8);
@@ -296,12 +303,12 @@ public class aimbot_blue extends LinearOpMode {
             //Once again this is by ChatGPT so take it with a grain of salt.
             //A Poem. By Andy.
 
-            telemetry.addData("This is the supposed RPM it should be shooting", chat);
+            //telemetry.addData("This is the supposed RPM it should be shooting", chat);
             //--------------------------
 
             //MAKE SURE YOU UNCOMMENT THIS
-            spin1.setPower(-powershot);
-            spin2.setPower(powershot);
+            spin1.setPower(powershot);
+            spin2.setPower(-powershot);
             LLResult result = limelight.getLatestResult();
 
             if (result != null && result.isValid() && !manual_aim) {
