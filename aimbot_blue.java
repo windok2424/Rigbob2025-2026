@@ -72,7 +72,7 @@ public class aimbot_blue extends LinearOpMode {
 
     private PIDController turret_pidcontroller;
     private PIDController shooter;
-    public static double pshoot = 0.2, ishoot = 0.02, dshoot = 0;
+    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
     public static double fshoot = 0;
 
 
@@ -241,7 +241,7 @@ public class aimbot_blue extends LinearOpMode {
             //telemetry.update();
 
 
-            pidshot = shooter.calculate(omega, shottarget);
+            double pidshot = shooter.calculate(omega, shottarget);
 
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
 
