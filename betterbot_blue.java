@@ -42,6 +42,9 @@ public class betterbot_blue extends LinearOpMode {
     DcMotorEx BL;
     DcMotorEx FR;
     DcMotorEx BR;
+
+    //--Intake and Holder--
+    DcMotorEx intake;
     Servo holder;
 
     @Override
@@ -54,24 +57,29 @@ public class betterbot_blue extends LinearOpMode {
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
 
+        //intake = hardwareMap.get(DcMotorEx.class, "intake");
+
         FR.setDirection(DcMotorSimple.Direction.REVERSE);
         BR.setDirection(DcMotorSimple.Direction.REVERSE);
 
         holder = hardwareMap.get(Servo.class, "holder");
 
-        double y = gamepad1.left_stick_y;
-        double x = gamepad1.left_stick_x;
-        double rx = gamepad1.left_trigger - gamepad1.right_trigger;
+        while(opModeIsActive()) {
 
-        double powerFL = (y + x + rx);
-        double powerBL = (y - x + rx);
-        double powerFR = (y - x - rx);
-        double powerBR = (y + x - rx);
+            double y = gamepad1.left_stick_y;
+            double x = gamepad1.left_stick_x;
+            double rx = gamepad1.left_trigger - gamepad1.right_trigger;
 
-        FL.setPower(powerFL);
-        FR.setPower(powerFR);
-        BL.setPower(powerBL);
-        BR.setPower(powerBR);
+            double powerFL = (y - x + rx);
+            double powerBL = (y + x + rx);
+            double powerFR = (y + x - rx);
+            double powerBR = (y - x - rx);
+
+            FL.setPower(powerFL);
+            FR.setPower(powerFR);
+            BL.setPower(powerBL);
+            BR.setPower(powerBR);
+        }
 
     }
 }
