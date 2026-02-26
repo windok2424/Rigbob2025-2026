@@ -47,17 +47,30 @@ public class betterbot_blue extends LinearOpMode {
     DcMotorEx intake;
     Servo holder;
 
+    //--Aiming Systems and Fire Control--
+    DcMotorEx turret;
+    Limelight3A lime;
+
     @Override
     public void runOpMode() throws InterruptedException {
 
         waitForStart();
+
+        lime = hardwareMap.get(Limelight3A.class, "limelight");
+        lime.start();
+        
+        //0 FOR BLUE, 1 FOR RED
+        lime.pipelineSwitch(0);
+        
+        
+        turret = hardwareMap.get(DcMotorEx.class, "turret");
 
         FL = hardwareMap.get(DcMotorEx.class, "FL");
         BL = hardwareMap.get(DcMotorEx.class, "BL");
         FR = hardwareMap.get(DcMotorEx.class, "FR");
         BR = hardwareMap.get(DcMotorEx.class, "BR");
 
-        //intake = hardwareMap.get(DcMotorEx.class, "intake");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
 
         FR.setDirection(DcMotorSimple.Direction.REVERSE);
         BR.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -70,6 +83,15 @@ public class betterbot_blue extends LinearOpMode {
             double x = gamepad1.left_stick_x;
             double rx = gamepad1.left_trigger - gamepad1.right_trigger;
 
+            boolean hold = gamepad1.b;
+            boolean in = gamepad1.a;
+
+            boolean manual = gamepad2.left_bumper;
+            double manualpower = gamepad2.right_stick_x;
+
+            boolean close;
+            boolean far;
+
             double powerFL = (y - x + rx);
             double powerBL = (y + x + rx);
             double powerFR = (y + x - rx);
@@ -79,6 +101,35 @@ public class betterbot_blue extends LinearOpMode {
             FR.setPower(powerFR);
             BL.setPower(powerBL);
             BR.setPower(powerBR);
+
+            if(in){
+                //change as needed
+                holder.setPosition(0);
+                intake.setPower(1);
+            } else if(hold){
+                holder.setPosition(1);
+                intake.setPower(0.8);
+            } else {
+                holder.setPosition(0);
+                intake.setPower(0);
+            }
+
+            LLResult result = lime.getLatestResult();
+            if(result != null && result.isValid() && !manual){
+                double tx;
+                tx = result.getTx();
+                //ADD PID
+                telemetry.addData("Found it:", 2);
+
+            } else if(manual){
+                turret.setPower(manualpower);
+                telemetry.addData("Manual Aim", 1);
+            } else{
+                telemetry.addData("No targets", 0);
+            }
+
+
+            telemetry.update();
         }
 
     }
