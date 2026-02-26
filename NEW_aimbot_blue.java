@@ -230,7 +230,7 @@ public class aimbot_blue extends LinearOpMode {
 
             double powershot = pidshot + ff;
 
-            
+
             if(holdit){
                 blocker.setPosition(0);
                 intake.setPower(0.8);
@@ -298,8 +298,6 @@ public class aimbot_blue extends LinearOpMode {
 
         lastXWheel = xWheel;
         lastYWheel = yWheel;
-
-//       theta = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         theta = pinpoint.getHeading(AngleUnit.DEGREES);
 
         double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
