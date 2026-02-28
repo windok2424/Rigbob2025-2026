@@ -39,7 +39,7 @@ class Pose2d {
     double x, y, theta;
     Pose2d(double x, double y, double theta) { this.x = x; this.y = y; this.theta = theta; }
 }
-@TeleOp(name = "aimbot_blue")
+@TeleOp(name = "better_blue")
 public class aimbot_blue extends LinearOpMode {
 
     double x = 0.0, y = 0.0, theta = 0.0;
@@ -54,6 +54,7 @@ public class aimbot_blue extends LinearOpMode {
     DcMotorEx spin1;
     DcMotorEx spin2;
     Servo blocker;
+    Servo adjust;
     IMU imu;
 
 
@@ -72,13 +73,13 @@ public class aimbot_blue extends LinearOpMode {
 
     private PIDController turret_pidcontroller;
     private PIDController shooter;
-    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    public static double pshoot = 0.016, ishoot = 0.04, dshoot = 0;
     public static double fshoot = 0;
 
 
     public static double pturret = 0.05, iturret = 0, dturret = 0.0005;
     public static double fturret = 0;
-    public static double shottarget = 2300;
+    public static double shottarget = -60;
     public static double turrettarget = 400;
 
 
@@ -106,7 +107,6 @@ public class aimbot_blue extends LinearOpMode {
         pinpoint.setOffsets(0, 0, DistanceUnit.MM);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpoint.resetPosAndIMU();
-        pinpoint.recalibrateIMU();
         FL = hardwareMap.get(DcMotorEx.class, "FL");
         BL = hardwareMap.get(DcMotorEx.class, "BL");
         FR = hardwareMap.get(DcMotorEx.class, "FR");
@@ -115,6 +115,7 @@ public class aimbot_blue extends LinearOpMode {
         spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
         spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
         blocker = hardwareMap.get(Servo.class, "hold");
+        adjust = hardwareMap.get(Servo.class, "adjust");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -205,22 +206,22 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("PowerFR", powerFR);
             telemetry.addData("PowerBR", powerBR);
 
-            double distance = Math.sqrt(Math.pow(365.76-pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
+            double distance = 365.76-Math.sqrt(Math.pow(pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
             telemetry.addData("Distance:", distance);
             telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
             telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
             telemetry.addData("Distance in CM", distance);
 
             if (far) {
-                shottarget = -2300;
+                shottarget = -1600;
                 telemetry.addData("Far Works", shottarget);
             }
             else if (close) {
                 telemetry.addData("Close Works", shottarget);
-                shottarget = -1900;
+                shottarget = -1300;
 
             } else {
-                shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
+                //shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
             }
             telemetry.addData("this is shot target", shottarget);
 
@@ -233,17 +234,17 @@ public class aimbot_blue extends LinearOpMode {
 
             if(holdit){
                 blocker.setPosition(0);
-                intake.setPower(0.8);
+                intake.setPower(-0.8);
             }
             else{
                 blocker.setPosition(1);
             }
             if (inOn) {
-                intake.setPower(1);
+                intake.setPower(-1);
 
 
             } else if(spinnyrev){
-                intake.setPower(-1);
+                intake.setPower(1);
             } else if(!holdit) {
                 intake.setPower(0);
 
