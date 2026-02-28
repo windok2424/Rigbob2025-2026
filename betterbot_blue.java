@@ -58,11 +58,11 @@ public class betterbot_blue extends LinearOpMode {
 
         lime = hardwareMap.get(Limelight3A.class, "limelight");
         lime.start();
-        
+
         //0 FOR BLUE, 1 FOR RED
         lime.pipelineSwitch(0);
-        
-        
+
+
         turret = hardwareMap.get(DcMotorEx.class, "turret");
 
         FL = hardwareMap.get(DcMotorEx.class, "FL");
@@ -71,11 +71,12 @@ public class betterbot_blue extends LinearOpMode {
         BR = hardwareMap.get(DcMotorEx.class, "BR");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FR.setDirection(DcMotorSimple.Direction.REVERSE);
         BR.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        holder = hardwareMap.get(Servo.class, "holder");
+        holder = hardwareMap.get(Servo.class, "hold");
 
         while(opModeIsActive()) {
 
@@ -85,6 +86,8 @@ public class betterbot_blue extends LinearOpMode {
 
             boolean hold = gamepad1.b;
             boolean in = gamepad1.a;
+
+            boolean out = gamepad1.dpad_left;
 
             boolean manual = gamepad2.left_bumper;
             double manualpower = gamepad2.right_stick_x;
@@ -109,7 +112,9 @@ public class betterbot_blue extends LinearOpMode {
             } else if(hold){
                 holder.setPosition(1);
                 intake.setPower(0.8);
-            } else {
+            } else if(out){
+                intake.setPower(-1);
+            }else {
                 holder.setPosition(0);
                 intake.setPower(0);
             }
