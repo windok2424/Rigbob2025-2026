@@ -35,10 +35,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-class Pose2d {
-    double x, y, theta;
-    Pose2d(double x, double y, double theta) { this.x = x; this.y = y; this.theta = theta; }
-}
+
 @TeleOp(name = "better_blue")
 public class aimbot_blue extends LinearOpMode {
 
@@ -151,7 +148,7 @@ public class aimbot_blue extends LinearOpMode {
 
             shooter.setPID(pshoot, ishoot, dshoot);
             turret_pidcontroller.setPID(pturret, iturret, dturret);
-            
+
             double omega = spin1.getVelocity();
             telemetry.addData("this is the omega", omega);
             //pinpoint.getPosition();
@@ -166,14 +163,14 @@ public class aimbot_blue extends LinearOpMode {
             boolean inOn = gamepad1.a;
             boolean spinnyrev = gamepad1.dpad_left;
             boolean holdit = gamepad1.b;
-            
+
             //gamepad 2
             boolean manual_aim = gamepad2.left_bumper;
             double manual_power = gamepad2.right_stick_x;
             boolean close = gamepad2.dpad_down;
             boolean far = gamepad2.dpad_up;
             boolean slowmode = gamepad2.right_bumper;
-            
+
 
             double powerFL = (y - x + rx);
             double powerBL = (y + x + rx);
@@ -267,5 +264,5 @@ public class aimbot_blue extends LinearOpMode {
         }
     }
 
-    
+
 }
