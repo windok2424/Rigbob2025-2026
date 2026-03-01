@@ -57,6 +57,8 @@ public class aimbot_blue extends LinearOpMode {
     Servo adjust;
     IMU imu;
 
+    GoBildaPinpointDriver pinpoint;
+
 
 
     DcMotorEx turret; //turntable motor
@@ -101,7 +103,7 @@ public class aimbot_blue extends LinearOpMode {
         imu.initialize(imuParams);
         imu.resetYaw();
 
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setOffsets(0, 0, DistanceUnit.MM);
@@ -149,52 +151,29 @@ public class aimbot_blue extends LinearOpMode {
 
             shooter.setPID(pshoot, ishoot, dshoot);
             turret_pidcontroller.setPID(pturret, iturret, dturret);
-
-
-            //x=9002ticks =46cm
-            //945.2
-
-
+            
             double omega = spin1.getVelocity();
             telemetry.addData("this is the omega", omega);
-
-
-
-            Pose2d pose = getRobotPose();
             //pinpoint.getPosition();
             pinpoint.update();
-
             omega = omega;
-
-
-
-            //telemetry.update();
 
 
             //gamepad 1
             double y = gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
             double rx = gamepad1.left_trigger - gamepad1.right_trigger;
-
-            boolean yes = false;
-
-
-            //boolean slowMode = gamepad1.left_bumper;
+            boolean inOn = gamepad1.a;
+            boolean spinnyrev = gamepad1.dpad_left;
+            boolean holdit = gamepad1.b;
+            
+            //gamepad 2
             boolean manual_aim = gamepad2.left_bumper;
             double manual_power = gamepad2.right_stick_x;
-
-            boolean inOn = gamepad1.a;
-            boolean kick = gamepad2.left_bumper;
-            boolean spinny = gamepad2.x;
-            boolean spinnyrev = gamepad1.dpad_left;
             boolean close = gamepad2.dpad_down;
             boolean far = gamepad2.dpad_up;
-            boolean holdit = gamepad1.b;
-            boolean runandkickup = gamepad2.y;
             boolean slowmode = gamepad2.right_bumper;
-
-            boolean auto_distance = gamepad2.y;
-            boolean manual_distance = gamepad2.a;
+            
 
             double powerFL = (y - x + rx);
             double powerBL = (y + x + rx);
@@ -288,25 +267,5 @@ public class aimbot_blue extends LinearOpMode {
         }
     }
 
-    Pose2d getRobotPose () {
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        pinpoint.update();
-        double xWheel = -pinpoint.getPosX(DistanceUnit.CM);
-        double yWheel = -pinpoint.getPosY(DistanceUnit.CM);
-
-        double deltaXWheel = xWheel - lastXWheel;
-        double deltaYWheel = yWheel - lastYWheel;
-
-        lastXWheel = xWheel;
-        lastYWheel = yWheel;
-        theta = pinpoint.getHeading(AngleUnit.DEGREES);
-
-        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
-        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
-
-        x += deltaX;
-        y += deltaY;
-
-        return new Pose2d(x, y,theta);
-    }
+    
 }
