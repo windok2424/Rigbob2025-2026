@@ -6,7 +6,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorEx; 
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -37,7 +37,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 @Autonomous(name="Holonomic_blue")
-public class Holonomic_blue extends LinearOpMode {
+public class Holonomic_Beta extends LinearOpMode {
     GoBildaPinpointDriver pinpoint;
     public PIDController xpos;
     public PIDController ypos;
@@ -63,7 +63,7 @@ public class Holonomic_blue extends LinearOpMode {
     DcMotorEx spin2;
     //--Intake--
     DcMotor intake;
-//    Servo holdfast;
+    //    Servo holdfast;
     IMU imu;
     DcMotor turret;
     Limelight3A limelight;
@@ -78,7 +78,7 @@ public class Holonomic_blue extends LinearOpMode {
     //final double Kp_xy = 0.14;
     final double Kp_xy = 0.3;
     final double Kp_theta = 0.12;
-//    public PIDController shooter;
+    //    public PIDController shooter;
 //    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
     private double shottarget = -2340;
 
@@ -95,7 +95,7 @@ public class Holonomic_blue extends LinearOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.update();
         double xWheel = -pinpoint.getPosX(DistanceUnit.CM);
-        double yWheel = -pinpoint.getPosY(DistanceUnit.CM);
+        double yWheel = pinpoint.getPosY(DistanceUnit.CM);
 
         double deltaXWheel = xWheel - lastXWheel;
         double deltaYWheel = yWheel - lastYWheel;
@@ -388,32 +388,32 @@ public class Holonomic_blue extends LinearOpMode {
 //
 //                //shooter pid
 //
-////                shooter.setPID(pshoot, ishoot, dshoot);
-////
-////
-////                double omega = spin1.getVelocity();
-////                telemetry.addData("this is the omega", omega);
-////
-////
-////                double pidshot = shooter.calculate(omega, shottarget);
-////                omega = omega;
-////
-////                double ff = Math.cos(Math.toRadians(shottarget)) * 0;
-////
-////                double powershot = pidshot + ff;
-////
-////                telemetry.addData("thisis pidshot", pidshot);
-////
-////
-////                telemetry.update();
-////
-////                spin1.setPower(powershot);
-////                spin2.setPower(powershot);
-////
-////                if (current > last) {
-////                    break;
-////
-////                }
+    ////                shooter.setPID(pshoot, ishoot, dshoot);
+    ////
+    ////
+    ////                double omega = spin1.getVelocity();
+    ////                telemetry.addData("this is the omega", omega);
+    ////
+    ////
+    ////                double pidshot = shooter.calculate(omega, shottarget);
+    ////                omega = omega;
+    ////
+    ////                double ff = Math.cos(Math.toRadians(shottarget)) * 0;
+    ////
+    ////                double powershot = pidshot + ff;
+    ////
+    ////                telemetry.addData("thisis pidshot", pidshot);
+    ////
+    ////
+    ////                telemetry.update();
+    ////
+    ////                spin1.setPower(powershot);
+    ////                spin2.setPower(powershot);
+    ////
+    ////                if (current > last) {
+    ////                    break;
+    ////
+    ////                }
 //            }
 //
 //
@@ -421,73 +421,73 @@ public class Holonomic_blue extends LinearOpMode {
 //    }
 
 
-void move(double y, double x, double angle) {
-    ElapsedTime sec = new ElapsedTime();
+    void move(double y, double x, double angle) {
+        ElapsedTime sec = new ElapsedTime();
 
 
-    sec.reset();
-    intake = hardwareMap.get(DcMotor.class, "intake");
+        sec.reset();
+        intake = hardwareMap.get(DcMotor.class, "intake");
 
-    double current = sec.seconds();
-    while (opModeIsActive()) {
+        double current = sec.seconds();
+        while (opModeIsActive()) {
 
-        current = sec.seconds();
+            current = sec.seconds();
 
 
-        pinpoint.update();
-        targetx = x;
-        targety = y;
-        targettheta = angle;
-        xpos.setPID(px, ix, dx);
-        ypos.setPID(py, iy, dx);
-        thetapos.setPID(ptheta, itheta, dtheta);
-        double currentx = pinpoint.getPosX(DistanceUnit.CM);
-        double currenty = -pinpoint.getPosY(DistanceUnit.CM);
-        double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
-        double errorX = targetx - currentx;
-        double errorY = targety - currenty;
-        double errortheta = targettheta - currenttheta;
-        double pidx = xpos.calculate(currentx, targetx);
-        double pidy = ypos.calculate(currenty, targety);
-        double pidtheta = thetapos.calculate(currenttheta, targettheta);
-        telemetry.addData("Target", "(%.1f, %.1f, %.1f)", targetx, targety, targettheta);
-        telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", currentx, currenty, currenttheta);
-        telemetry.addData("PID", "(%.1f, %.1f, %.1f°)", pidx, pidy, pidtheta);
-        telemetry.update();
-        setMecanumPowers(pidx, pidy, pidtheta);
-        if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
-                Math.abs(errorY) < POSITION_TOLERANCE_CM &&
-                Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
-            break;
+            pinpoint.update();
+            targetx = x;
+            targety = y;
+            targettheta = angle;
+            xpos.setPID(px, ix, dx);
+            ypos.setPID(py, iy, dx);
+            thetapos.setPID(ptheta, itheta, dtheta);
+            double currentx = -pinpoint.getPosX(DistanceUnit.CM);
+            double currenty = -pinpoint.getPosY(DistanceUnit.CM);
+            double currenttheta = pinpoint.getHeading(AngleUnit.DEGREES);
+            double errorX = targetx - currentx;
+            double errorY = targety - currenty;
+            double errortheta = targettheta - currenttheta;
+            double pidx = xpos.calculate(currentx, targetx);
+            double pidy = ypos.calculate(currenty, targety);
+            double pidtheta = thetapos.calculate(currenttheta, targettheta);
+            telemetry.addData("Target", "(%.1f, %.1f, %.1f)", targetx, targety, targettheta);
+            telemetry.addData("Pose", "(%.1f, %.1f, %.1f°)", currentx, currenty, currenttheta);
+            telemetry.addData("PID", "(%.1f, %.1f, %.1f°)", pidx, pidy, pidtheta);
+            telemetry.update();
+            setMecanumPowers(pidx, pidy, pidtheta);
+            if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errorY) < POSITION_TOLERANCE_CM &&
+                    Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
+                break;
+            }
         }
+
     }
 
-}
+    void setMecanumPowers ( double strafe, double forward, double rotate){
+        double fl = -forward - strafe - rotate;
+        double fr = forward - strafe - rotate;
+        double bl = forward - strafe + rotate;
+        double br = forward + strafe - rotate;
 
-        void setMecanumPowers ( double strafe, double forward, double rotate){
-            double fl = -forward - strafe - rotate;
-            double fr = forward - strafe - rotate;
-            double bl = forward - strafe + rotate;
-            double br = forward + strafe - rotate;
+        double max = Math.max(1.0, Math.max(Math.abs(fl),
+                Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br)))));
+        fl /= max;
+        fr /= max;
+        bl /= max;
+        br /= max;
 
-            double max = Math.max(1.0, Math.max(Math.abs(fl),
-                    Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br)))));
-            fl /= max;
-            fr /= max;
-            bl /= max;
-            br /= max;
-
-            frontLeft.setPower(fl);
-            frontRight.setPower(fr);
-            backLeft.setPower(bl);
-            backRight.setPower(br);
-        }
-        void holdfastball ( double last){
-            ElapsedTime sec = new ElapsedTime();
+        frontLeft.setPower(fl);
+        frontRight.setPower(fr);
+        backLeft.setPower(bl);
+        backRight.setPower(br);
+    }
+    void holdfastball ( double last){
+        ElapsedTime sec = new ElapsedTime();
 
 
-            sec.reset();
-            double current = sec.seconds();
+        sec.reset();
+        double current = sec.seconds();
 //            while (opModeIsActive()) {
 //                current = sec.seconds();
 //                holdfast.setPosition(1);
@@ -499,50 +499,50 @@ void move(double y, double x, double angle) {
 //            }
 
 
-        }
+    }
 
-        void rotateToAngle ( double targetAngleDegrees){
-            double targetAngle = Math.toRadians(targetAngleDegrees);
-            double Kp = 0.1;  // proportional control constant
-            double MIN_POWER = 0.05;
-            double MAX_POWER = 0.4;
-            double TOLERANCE = Math.toRadians(2); // within ±2°
+    void rotateToAngle ( double targetAngleDegrees){
+        double targetAngle = Math.toRadians(targetAngleDegrees);
+        double Kp = 0.1;  // proportional control constant
+        double MIN_POWER = 0.05;
+        double MAX_POWER = 0.4;
+        double TOLERANCE = Math.toRadians(2); // within ±2°
 
-            while (opModeIsActive()) {
-                double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-                double error = normalizeAngle(targetAngle - currentAngle);
+        while (opModeIsActive()) {
+            double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            double error = normalizeAngle(targetAngle - currentAngle);
 
-                // Break if close enough
-                if (Math.abs(error) < TOLERANCE) break;
+            // Break if close enough
+            if (Math.abs(error) < TOLERANCE) break;
 
-                // Proportional control
-                double power = 0.5;
+            // Proportional control
+            double power = 0.5;
 
-                // Clamp power
+            // Clamp power
 //            power = Math.max(-MAX_POWER, Math.min(MAX_POWER, power));
 
-                // Apply minimum turning power
-                if (Math.abs(power) < MIN_POWER)
-                    power = Math.signum(power) * MIN_POWER;
+            // Apply minimum turning power
+            if (Math.abs(power) < MIN_POWER)
+                power = Math.signum(power) * MIN_POWER;
 
-                // Apply rotation (all wheels turn in opposite directions)
-                frontLeft.setPower(power);
-                backLeft.setPower(-power);
-                frontRight.setPower(power);
-                backRight.setPower(-power);
+            // Apply rotation (all wheels turn in opposite directions)
+            frontLeft.setPower(power);
+            backLeft.setPower(-power);
+            frontRight.setPower(power);
+            backRight.setPower(-power);
 
-                telemetry.addData("Target Angle", Math.toDegrees(targetAngle));
-                telemetry.addData("Current Angle", Math.toDegrees(currentAngle));
-                telemetry.addData("Error", Math.toDegrees(error));
-                telemetry.addData("Power", power);
-                telemetry.addLine("(┬┬﹏┬┬)");
-                telemetry.update();
-            }
-
-            // Stop all motors
-            frontLeft.setPower(0);
-            frontRight.setPower(0);
-            backLeft.setPower(0);
-            backRight.setPower(0);
+            telemetry.addData("Target Angle", Math.toDegrees(targetAngle));
+            telemetry.addData("Current Angle", Math.toDegrees(currentAngle));
+            telemetry.addData("Error", Math.toDegrees(error));
+            telemetry.addData("Power", power);
+            telemetry.addLine("(┬┬﹏┬┬)");
+            telemetry.update();
         }
+
+        // Stop all motors
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
     }
+}
