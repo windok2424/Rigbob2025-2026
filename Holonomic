@@ -42,7 +42,7 @@ public class Holonomic_blue extends LinearOpMode {
     public PIDController xpos;
     public PIDController ypos;
     public PIDController thetapos;
-    public static double px = -0.03, ix = 0.1, dx = 0.002;
+    public static double px = -0.06, ix = 0.1, dx = 0.002;
     //0.03
 
     public static double targetx = 0;
@@ -85,7 +85,7 @@ public class Holonomic_blue extends LinearOpMode {
     final double MIN_TRANSLATION_POWER = 0.1;
     final double MIN_ROTATION_POWER = 0.05;
 
-    final double POSITION_TOLERANCE_CM = 2.0;
+    final double POSITION_TOLERANCE_CM = 5.0;
     final double ANGLE_TOLERANCE_RAD = Math.toRadians(2);
     class Pose2d {
         double x, y, theta;
@@ -455,11 +455,11 @@ void move(double y, double x, double angle) {
         telemetry.addData("PID", "(%.1f, %.1f, %.1f°)", pidx, pidy, pidtheta);
         telemetry.update();
         setMecanumPowers(pidx, pidy, pidtheta);
-//        if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
-//                Math.abs(errorY) < POSITION_TOLERANCE_CM &&
-//                Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
-//            break;
-//        }
+        if (Math.abs(errorX) < POSITION_TOLERANCE_CM &&
+                Math.abs(errorY) < POSITION_TOLERANCE_CM &&
+                Math.abs(errortheta) < ANGLE_TOLERANCE_RAD) {
+            break;
+        }
     }
 
 }
