@@ -209,11 +209,11 @@ public class aimbot_blue extends LinearOpMode {
 
 
             if(holdit){
-                blocker.setPosition(0);
-                intake.setPower(-0.8);
+                blocker.setPosition(1);
+                intake.setPower(-1);
             }
             else{
-                blocker.setPosition(1);
+                blocker.setPosition(0);
             }
             if (inOn) {
                 intake.setPower(-1);
