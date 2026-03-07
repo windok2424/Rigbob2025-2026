@@ -186,16 +186,13 @@ public class betterbot_red extends LinearOpMode {
 
             if (far) {
                 shottarget = -1800;
-                adjust.setPosition(0.8);
+                adjust.setPosition(0.2);
 
                 telemetry.addData("Adfar Works", adfar);
                 telemetry.addData("Far Works", shottarget);
             }
             else if (close) {
                 telemetry.addData("Close Works", shottarget);
-
-
-
                 adjust.setPosition(0.5);
 
                 telemetry.addData("Adclose Works", adclose);
