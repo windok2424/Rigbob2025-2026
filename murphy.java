@@ -72,6 +72,7 @@ public class mato extends LinearOpMode {
     CRServo transferservo;
     Limelight3A limelight;
     Servo blocker;
+    Servo adjust;
 
     double x = 0.0, y = 0.0, theta = 0.0;
     double lastXWheel = 0.0, lastYWheel = 0.0;
@@ -131,6 +132,7 @@ public class mato extends LinearOpMode {
 //        shooter = new PIDController(pshoot, ishoot, dshoot);
 //        turret_pidcontroller = new PIDController(pturret, iturret, dturret);
 
+        adjust = hardwareMap.get(Servo.class, "adjust");
 
         frontLeft = hardwareMap.get(DcMotor.class, "FL");
         frontRight = hardwareMap.get(DcMotor.class, "FR");
@@ -180,33 +182,37 @@ public class mato extends LinearOpMode {
             pinpoint.update();
             Pose2d pose = getRobotPose();
 
+
             telemetry.addData("X (mm)", getRobotPose().x);
             telemetry.addData("Y (mm)", getRobotPose().y);
             telemetry.addData("Heading (rad)", getRobotPose().theta);
             telemetry.update();
+            adjust.setPosition(0.5);
             imu.resetYaw();
             sleep(250);
 
 
-            move( -100,-100,0,2, false);
-            shoot(2,1400,20);
+            move( -100,-100,0,2.5, false);
+
+            shoot(5,-1400,20);
+            sleep(200);
             move(-10,-100,0,2, false);
             move(-10,-120,0,0.5, false);
             move(10,-120,0,2, false);
             move(-100,-100,0,3, false);
-            shoot(2,1400,20);
+            shoot(2,-1400,20);
             move(-50,-150,0,2, false);
             move(-10,-150,0,1, false);
             move(-100,-100,0,2, false);
-            shoot(2,1400,20);
+            shoot(2,-1400,20);
             move(-50,-200,0,2, false);
             move(-10,-200,0,1, false);
             move(-100,-100,0,2, false);
-            shoot(2,1400,20);
+            shoot(2,-1400,20);
             move(-50,-250,0,2, false);
             move(-10,-250,0,1, false);
             move(-100,-100,0,4, false);
-            shoot(2,1400,20);
+            shoot(2,-1400,20);
         }
 
         //setMecanumPowers(0,0,0);
@@ -275,8 +281,10 @@ public class mato extends LinearOpMode {
 
         double current = sec.seconds();
         while (opModeIsActive()) {
+            blocker.setPosition(0.5);
+
             if(runintake = true){
-                blocker.setPosition(0.8);
+
                 intake.setPower(-1);
                 transferservo.setPower(1);
             }else{
@@ -284,6 +292,9 @@ public class mato extends LinearOpMode {
             }
 
             current = sec.seconds();
+
+            spin1.setPower(-0.5);
+            spin2.setPower(0.5);
 
 
             pinpoint.update();
@@ -386,17 +397,18 @@ public class mato extends LinearOpMode {
 
 
 
+
             current = sec.seconds();
             tprinsec = clockfortpr.seconds();
 
-            if(0< tprinsec && tprinsec < 4){
-                intake.setPower(0);
-
-            }
-
-            else{
-                intake.setPower(0);
-            }
+//            if(0< tprinsec && tprinsec < 4){
+//                intake.setPower(0);
+//
+//            }
+//
+//            else{
+//                intake.setPower(0);
+//            }
 
 
 
@@ -408,11 +420,15 @@ public class mato extends LinearOpMode {
 
 
             double omega = spin1.getVelocity();
+            // Changed here
+            omega = omega;
+
+
             telemetry.addData("this is the omega", omega);
 
 
             double pidshot = shooter.calculate(omega, shottarget);
-            omega = omega;
+
 
 
             double powershot = pidshot;
@@ -422,10 +438,13 @@ public class mato extends LinearOpMode {
 
             telemetry.update();
 
-            spin1.setPower(-powershot);
-            spin2.setPower(powershot);
+            spin1.setPower(powershot);
+            spin2.setPower(-powershot);
+            //also changed here
 
             if(current >  last){
+
+                blocker.setPosition(0.5);
                 break;
 
             }
