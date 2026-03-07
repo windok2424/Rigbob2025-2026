@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,31 +15,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.LLResultTypes.*;
-import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-import java.util.List;
-import com.acmerobotics.*;
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.*;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-class Pose2d {
-    double x, y, theta;
-    Pose2d(double x, double y, double theta) { this.x = x; this.y = y; this.theta = theta; }
-}
-@TeleOp(name = "aimbot_blue")
-public class aimbot_blue extends LinearOpMode {
+
+@TeleOp(name = "better_red")
+public class betterbot_red extends LinearOpMode {
 
     double x = 0.0, y = 0.0, theta = 0.0;
 
@@ -54,7 +35,11 @@ public class aimbot_blue extends LinearOpMode {
     DcMotorEx spin1;
     DcMotorEx spin2;
     Servo blocker;
+    Servo adjust;
     IMU imu;
+    CRServo transferservo;
+
+    GoBildaPinpointDriver pinpoint;
 
 
 
@@ -72,13 +57,13 @@ public class aimbot_blue extends LinearOpMode {
 
     private PIDController turret_pidcontroller;
     private PIDController shooter;
-    public static double pshoot = 0.02, ishoot = 0.2, dshoot = 0;
+    public static double pshoot = 0.016, ishoot = 0.04, dshoot = 0;
     public static double fshoot = 0;
 
 
     public static double pturret = 0.05, iturret = 0, dturret = 0.0005;
     public static double fturret = 0;
-    public static double shottarget = 2300;
+    public static double shottarget = -60;
     public static double turrettarget = 400;
 
 
@@ -100,13 +85,12 @@ public class aimbot_blue extends LinearOpMode {
         imu.initialize(imuParams);
         imu.resetYaw();
 
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setOffsets(0, 0, DistanceUnit.MM);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpoint.resetPosAndIMU();
-        pinpoint.recalibrateIMU();
         FL = hardwareMap.get(DcMotorEx.class, "FL");
         BL = hardwareMap.get(DcMotorEx.class, "BL");
         FR = hardwareMap.get(DcMotorEx.class, "FR");
@@ -115,6 +99,8 @@ public class aimbot_blue extends LinearOpMode {
         spin1 = hardwareMap.get(DcMotorEx.class, "shootup");
         spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
         blocker = hardwareMap.get(Servo.class, "hold");
+        adjust = hardwareMap.get(Servo.class, "adjust");
+        transferservo = hardwareMap.get(CRServo.class, "transferservo");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -149,51 +135,37 @@ public class aimbot_blue extends LinearOpMode {
             shooter.setPID(pshoot, ishoot, dshoot);
             turret_pidcontroller.setPID(pturret, iturret, dturret);
 
-
-            //x=9002ticks =46cm
-            //945.2
-
-
             double omega = spin1.getVelocity();
             telemetry.addData("this is the omega", omega);
-
-
-
-            Pose2d pose = getRobotPose();
             //pinpoint.getPosition();
             pinpoint.update();
-
             omega = omega;
-
-
-
-            //telemetry.update();
 
 
             //gamepad 1
             double y = gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
             double rx = gamepad1.left_trigger - gamepad1.right_trigger;
+            boolean inOn = gamepad1.a;
 
-            boolean yes = false;
+            boolean spinnyrev = gamepad1.dpad_left;
+            boolean holdit = gamepad1.b;
 
 
-            //boolean slowMode = gamepad1.left_bumper;
+
+            boolean adclose = gamepad1.dpad_up;
+            boolean adfar = gamepad1.dpad_down;
+
+            //gamepad 2
+            boolean check = gamepad2.a;
             boolean manual_aim = gamepad2.left_bumper;
             double manual_power = gamepad2.right_stick_x;
-
-            boolean inOn = gamepad1.a;
-            boolean kick = gamepad2.left_bumper;
-            boolean spinny = gamepad2.x;
-            boolean spinnyrev = gamepad1.dpad_left;
             boolean close = gamepad2.dpad_down;
             boolean far = gamepad2.dpad_up;
-            boolean holdit = gamepad1.b;
-            boolean runandkickup = gamepad2.y;
             boolean slowmode = gamepad2.right_bumper;
 
-            boolean auto_distance = gamepad2.y;
-            boolean manual_distance = gamepad2.a;
+            boolean nolol = gamepad2.b;
+
 
             double powerFL = (y - x + rx);
             double powerBL = (y + x + rx);
@@ -205,22 +177,36 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("PowerFR", powerFR);
             telemetry.addData("PowerBR", powerBR);
 
-            double distance = Math.sqrt(Math.pow(365.76-pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
+            double distance = 365.76-Math.sqrt(Math.pow(pinpoint.getPosY(DistanceUnit.CM), 2)+Math.pow(pinpoint.getPosX(DistanceUnit.CM)*1.262, 2));
             telemetry.addData("Distance:", distance);
             telemetry.addData("x distance", pinpoint.getPosX(DistanceUnit.CM));
             telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
             telemetry.addData("Distance in CM", distance);
 
+
             if (far) {
-                shottarget = -2300;
+                shottarget = -1800;
+                adjust.setPosition(0.8);
+
+                telemetry.addData("Adfar Works", adfar);
                 telemetry.addData("Far Works", shottarget);
             }
             else if (close) {
                 telemetry.addData("Close Works", shottarget);
-                shottarget = -1900;
 
-            } else {
-                shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
+
+
+                adjust.setPosition(0.5);
+
+                telemetry.addData("Adclose Works", adclose);
+                shottarget = -1500;
+
+            } else if(nolol){
+                shottarget = -60;
+                telemetry.addData("No lol", shottarget);
+            }else {
+                //shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
+                adjust.setPosition(0.8);
             }
             telemetry.addData("this is shot target", shottarget);
 
@@ -231,19 +217,25 @@ public class aimbot_blue extends LinearOpMode {
             double powershot = pidshot + ff;
 
 
+
             if(holdit){
                 blocker.setPosition(0);
-                intake.setPower(0.8);
+                intake.setPower(-1);
+                transferservo.setPower(1);
+//                transferservo.setPower(1);
             }
             else{
-                blocker.setPosition(1);
+                blocker.setPosition(0.5);
+                transferservo.setPower(0);
             }
             if (inOn) {
-                intake.setPower(1);
+                intake.setPower(-1);
+                transferservo.setPower(1);
 
 
             } else if(spinnyrev){
-                intake.setPower(-1);
+                intake.setPower(1);
+//                transferservo.setPower(-0.5);
             } else if(!holdit) {
                 intake.setPower(0);
 
@@ -287,25 +279,5 @@ public class aimbot_blue extends LinearOpMode {
         }
     }
 
-    Pose2d getRobotPose () {
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        pinpoint.update();
-        double xWheel = -pinpoint.getPosX(DistanceUnit.CM);
-        double yWheel = -pinpoint.getPosY(DistanceUnit.CM);
 
-        double deltaXWheel = xWheel - lastXWheel;
-        double deltaYWheel = yWheel - lastYWheel;
-
-        lastXWheel = xWheel;
-        lastYWheel = yWheel;
-        theta = pinpoint.getHeading(AngleUnit.DEGREES);
-
-        double deltaX = deltaXWheel * Math.cos(theta) - deltaYWheel * Math.sin(theta);
-        double deltaY = deltaXWheel * Math.sin(theta) + deltaYWheel * Math.cos(theta);
-
-        x += deltaX;
-        y += deltaY;
-
-        return new Pose2d(x, y,theta);
-    }
 }
