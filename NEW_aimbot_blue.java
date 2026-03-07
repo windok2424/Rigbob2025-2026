@@ -37,7 +37,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
 @TeleOp(name = "better_blue")
-public class aimbot_blue extends LinearOpMode {
+public class McCelary extends LinearOpMode {
 
     double x = 0.0, y = 0.0, theta = 0.0;
 
@@ -53,6 +53,7 @@ public class aimbot_blue extends LinearOpMode {
     Servo blocker;
     Servo adjust;
     IMU imu;
+    CRServo transferservo;
 
     GoBildaPinpointDriver pinpoint;
 
@@ -115,6 +116,7 @@ public class aimbot_blue extends LinearOpMode {
         spin2 = hardwareMap.get(DcMotorEx.class, "shootdown");
         blocker = hardwareMap.get(Servo.class, "hold");
         adjust = hardwareMap.get(Servo.class, "adjust");
+        transferservo = hardwareMap.get(CRServo.class, "transferservo");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -161,8 +163,12 @@ public class aimbot_blue extends LinearOpMode {
             double x = gamepad1.left_stick_x;
             double rx = gamepad1.left_trigger - gamepad1.right_trigger;
             boolean inOn = gamepad1.a;
+
             boolean spinnyrev = gamepad1.dpad_left;
             boolean holdit = gamepad1.b;
+
+            boolean adclose = gamepad1.dpad_up;
+            boolean adfar = gamepad1.dpad_down;
 
             //gamepad 2
             boolean manual_aim = gamepad2.left_bumper;
@@ -188,12 +194,17 @@ public class aimbot_blue extends LinearOpMode {
             telemetry.addData("y distance", pinpoint.getPosY(DistanceUnit.CM));
             telemetry.addData("Distance in CM", distance);
 
+
             if (far) {
                 shottarget = -1600;
+                adjust.setPosition(0);
+                telemetry.addData("Adfar Works", adfar);
                 telemetry.addData("Far Works", shottarget);
             }
             else if (close) {
                 telemetry.addData("Close Works", shottarget);
+                adjust.setPosition(1);
+                telemetry.addData("Adclose Works", adclose);
                 shottarget = -1300;
 
             } else {
@@ -206,14 +217,17 @@ public class aimbot_blue extends LinearOpMode {
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
 
             double powershot = pidshot + ff;
+            transferservo.setPower(1);
 
 
             if(holdit){
-                blocker.setPosition(1);
+                blocker.setPosition(0);
                 intake.setPower(-1);
+//                transferservo.setPower(1);
             }
             else{
-                blocker.setPosition(0);
+                blocker.setPosition(0.8);
+                //transferservo.setPower(-1);
             }
             if (inOn) {
                 intake.setPower(-1);
@@ -221,6 +235,7 @@ public class aimbot_blue extends LinearOpMode {
 
             } else if(spinnyrev){
                 intake.setPower(1);
+//                transferservo.setPower(-0.5);
             } else if(!holdit) {
                 intake.setPower(0);
 
