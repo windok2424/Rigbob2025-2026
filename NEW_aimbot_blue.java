@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.hardware.limelightvision.LLFieldMap;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -16,23 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.LLResultTypes.*;
-import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-import java.util.List;
-import com.acmerobotics.*;
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.*;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
@@ -167,15 +151,20 @@ public class McCelary extends LinearOpMode {
             boolean spinnyrev = gamepad1.dpad_left;
             boolean holdit = gamepad1.b;
 
+
+
             boolean adclose = gamepad1.dpad_up;
             boolean adfar = gamepad1.dpad_down;
 
             //gamepad 2
+            boolean check = gamepad2.a;
             boolean manual_aim = gamepad2.left_bumper;
             double manual_power = gamepad2.right_stick_x;
             boolean close = gamepad2.dpad_down;
             boolean far = gamepad2.dpad_up;
             boolean slowmode = gamepad2.right_bumper;
+
+            boolean nolol = gamepad2.b;
 
 
             double powerFL = (y - x + rx);
@@ -196,19 +185,28 @@ public class McCelary extends LinearOpMode {
 
 
             if (far) {
-                shottarget = -1600;
-                adjust.setPosition(0);
+                shottarget = -1800;
+                    adjust.setPosition(0.8);
+
                 telemetry.addData("Adfar Works", adfar);
                 telemetry.addData("Far Works", shottarget);
             }
             else if (close) {
                 telemetry.addData("Close Works", shottarget);
-                adjust.setPosition(1);
-                telemetry.addData("Adclose Works", adclose);
-                shottarget = -1300;
 
-            } else {
+
+
+                    adjust.setPosition(0.5);
+
+                telemetry.addData("Adclose Works", adclose);
+                shottarget = -1500;
+
+            } else if(nolol){
+                shottarget = -60;
+                telemetry.addData("No lol", shottarget);
+            }else {
                 //shottarget = (-2393 + 42.5 * distance + -0.146 * Math.pow(distance, 2) + (1.79 * Math.pow(10, -4)) * Math.pow(distance, 3) + (-1.73 * Math.pow(10, -8)) * Math.pow(distance, 4));
+                adjust.setPosition(0.8);
             }
             telemetry.addData("this is shot target", shottarget);
 
@@ -217,20 +215,22 @@ public class McCelary extends LinearOpMode {
             double ff = Math.cos(Math.toRadians(shottarget)) * 0;
 
             double powershot = pidshot + ff;
-            transferservo.setPower(1);
+
 
 
             if(holdit){
                 blocker.setPosition(0);
                 intake.setPower(-1);
+                transferservo.setPower(1);
 //                transferservo.setPower(1);
             }
             else{
-                blocker.setPosition(0.8);
-                //transferservo.setPower(-1);
+                blocker.setPosition(0.5);
+                transferservo.setPower(0);
             }
             if (inOn) {
                 intake.setPower(-1);
+                transferservo.setPower(1);
 
 
             } else if(spinnyrev){
